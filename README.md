@@ -7,6 +7,8 @@ Python script for the purpose of capturing moments from your screen shortly afte
 * Capture a screenshot
 * Open a GUI with all the settings
 * (optional) Crop the captured video / screenshot
+* (optional) Installation file
+* (optional) Autostart
 
 
 ## TODO overview:
