@@ -24,5 +24,4 @@ Python script for the purpose of capturing moments from your screen shortly afte
 ## Branching - how to use GitHub branches
 * master - tested and working code _(protected)_
 * dev - development of code
-  * hierarchy - packages, modules, function signatures
-  * organizational - readme and other organizational changes
+* hierarchy - packages, modules, function signatures
