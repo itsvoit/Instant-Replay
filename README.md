@@ -13,11 +13,11 @@ Python script for the purpose of capturing moments from your screen shortly afte
 
 ## TODO overview:
 1. Hierarchy of packages
-2. Interfaces
+2. Skeleton of the script
+3. Interfaces
    1. Modules in packages
    2. Functions and Classes for each module
    3. Descriptions of each module (each class and function)
-3. Skeleton of the script
 4. Finished script
 
 
