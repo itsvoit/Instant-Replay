@@ -76,7 +76,7 @@
   * zabezpieczenie czy juz nie jest odpalony ([link](https://stackoverflow.com/questions/9705982/pythonw-exe-or-python-exe))
   * odpalenie w trayu lub okna (gui) ([link](https://stackoverflow.com/questions/6389580/quick-and-easy-trayicon-with-python))
   * instancjonowanie klasy Capture z odpowiednimi ustawieniami
-  * nasluchiwanie skrotow klawiszowych
+  * nasluchiwanie skrotow klawiszowych ([link](https://www.geeksforgeeks.org/how-to-create-a-hotkey-in-python/))
   
 * Klasa Capture
   * obsluga klasy Config
