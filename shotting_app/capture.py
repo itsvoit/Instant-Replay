@@ -1,10 +1,32 @@
 class Capture:
-	...
+	def __init__(self, display, resolution, fps, length, with_sound: bool, video_encoder: VideoEncoder):
+		self.display = display
+		self.resolution = resolution
+		self.fps = fps
+		self.length = length
+		self.with_sound = with_sound
+		self.video_encoder = video_encoder
 
+	@classmethod
+	def from_config(cls, config: Config, video_encoder: VideoEncoder):
+		return cls(
+			config.display,
+			config.resolution,
+			config.fps,
+			config.length,
+			config.with_sound,
+			video_encoder
+		)
 
-class Config:
-	...
+	def start_recording(self):
+		...
 
+	def stop_recording(self):
+		...
 
-class VideoEncoder:
-	...
+	def get_snapshot(self):
+		...
+
+	def get_screenshot(self):
+		...
+
