@@ -41,49 +41,52 @@ def img_to_buffer(sct_img, ext, quality):
     return buffer
 
 
-rec_send, rec_recv = Pipe(duplex=False)
-trim_send, trim_recv = Pipe(duplex=False)
-snap_send, snap_recv = Pipe(duplex=False)
-
-
 class RecorderProcess(multiprocessing.Process):
-    def __init__(self, img_queue, interval):
+    def __init__(self, img_queue, rec_recv, interval):
         multiprocessing.Process.__init__(self)
         self.task = rec_recv
         self.img_queue = img_queue
-        self.sct = mss.mss()
         self.interval = interval
 
+        # print(id(self.img_queue))
+
     def run(self):
-        with self.sct as sct:
+        with mss.mss() as sct:
             mon = sct.monitors[1]
             while "Recording":
                 if self.task.poll() and self.task.recv() == "KILL":
                     self.img_queue.put(None)
                     break
 
+                # print("Shot")
                 sct_img = sct.grab(mon)
                 self.img_queue.put(sct_img)
+                # print(sct_img)
 
 
 class ConvertProcess(multiprocessing.Process):
-    def __init__(self, img_queue, buffered_frames, length, ext, quality):
+    def __init__(self, img_queue, buffered_frames, trim_send, length, fps, ext, quality):
         multiprocessing.Process.__init__(self)
         self.img_queue = img_queue
         self.buffered_frames = buffered_frames
         self.trim_send = trim_send
         self.length = length
+        self.fps = fps
         self.ext = ext
         self.quality = quality
         self.cnt = 0
 
-    def _convert(self):
+        # print(id(self.img_queue))
+
+    def run(self):
+        print("Convert process running...")
         while "There are screenshots":
-            if self.cnt == self.length * 2:
+            if self.cnt == self.length * 2 * self.fps:
                 self.cnt = self.length
                 self.trim_send.send("TRIM")
 
             sct_img = self.img_queue.get()
+            # print("Got an image")
             if sct_img is None:
                 self.trim_send.send("KILL")
                 break
@@ -94,20 +97,21 @@ class ConvertProcess(multiprocessing.Process):
 
 
 class TrimProcess(multiprocessing.Process):
-    def __init__(self, buffered_frames, length):
+    def __init__(self, buffered_frames, trim_recv, length, fps):
         multiprocessing.Process.__init__(self)
         self.buffered_frames = buffered_frames
         self.trim_recv = trim_recv
         self.length = length
+        self.fps = fps
 
-    def _trim(self):
+    def run(self):
         while "Working":
             if self.trim_recv.poll():
                 task = self.trim_recv.recv()
                 if task == "KILL":
                     break
                 elif task == "TRIM":
-                    del self.buffered_frames[:self.length]
+                    del self.buffered_frames[:self.length*self.fps]
 
 
 class Capture:
@@ -132,11 +136,14 @@ class Capture:
 
         # Multiprocessing
         self.img_queue = Queue()
+        self.rec_recv, self.rec_send = Pipe(duplex=False)
+        self.trim_recv, self.trim_send = Pipe(duplex=False)
+        self.snap_recv, self.snap_send = Pipe(duplex=False)
 
-        self.rec_process = RecorderProcess(self.img_queue, copy(self.interval))
-        self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames,
-                                           copy(self.length), copy(self.ext), copy(self.quality))
-        self.trim_process = TrimProcess(self.buffered_frames, copy(self.length))
+        self.rec_process = RecorderProcess(self.img_queue, self.rec_recv, copy(self.interval))
+        self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames, self.trim_send,
+                                           copy(self.length), copy(self.fps), copy(self.ext), copy(self.quality))
+        self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps))
 
     @classmethod
     def from_config(cls, config: Config, video_encoder: VideoEncoder):
@@ -150,15 +157,9 @@ class Capture:
         )
 
     def start_recording(self):
-        RecorderProcess(self.img_queue, copy(self.interval))
-
-        ConvertProcess(self.img_queue, self.buffered_frames, copy(self.length), copy(self.ext), copy(self.quality)).start()
-
-        TrimProcess(self.buffered_frames, copy(self.length)).start()
-
-        # self.rec_process.start()
-        # self.conv_process.start()
-        # self.trim_process.start()
+        self.rec_process.start()
+        self.conv_process.start()
+        self.trim_process.start()
 
     def stop_recording(self):
         """
@@ -169,9 +170,10 @@ class Capture:
         """
 
         if not self.rec_process.is_alive():
-
+            print("Process is unalived")
             return
-        rec_send.send("KILL")
+        print("Killing process")
+        self.rec_send.send("KILL")
 
         self.rec_process.join()
         self.conv_process.join()
@@ -182,13 +184,15 @@ class Capture:
         self.exported_frames = self.manager.list()
         self.buffered_frames = self.manager.list()
 
-        self.rec_process = RecorderProcess(self.img_queue, copy(self.interval))
-        self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames,
-                                           copy(self.length), copy(self.ext), copy(self.quality))
-        self.trim_process = TrimProcess(self.buffered_frames, copy(self.length))
+        self.rec_process = RecorderProcess(self.img_queue, self.rec_recv, copy(self.interval))
+        self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames, self.trim_send,
+                                           copy(self.length), copy(self.fps), copy(self.ext), copy(self.quality))
+        self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps))
 
     def get_snapshot(self):
-        self.exported_frames = self.buffered_frames[:self.length]
+        # print("Get snapshot")
+        # print(self.buffered_frames)
+        self.exported_frames = self.buffered_frames[:self.length*self.fps]
         return list(self.exported_frames)
 
     def get_screenshot(self):
