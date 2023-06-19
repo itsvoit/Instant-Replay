@@ -21,7 +21,20 @@ class Config:
 
 
 class Frame:
-    ...
+    def __init__(self, sct_img, format_, quality):
+        self.buffered_img = BytesIO()
+        self.size = sct_img.size
+        self.format_ = format_
+
+        img = Image.frombytes("RGB", self.size, sct_img.bgra, "raw", "BGRX")
+        img.save(self.buffered_img, format=format_, quality=quality)
+
+    def to_file(self, path_):
+        with open(path_, mode="wb") as file:
+            file.write(self.buffered_img.getbuffer().tobytes())
+
+    def get(self):
+        return Image.open(self.buffered_img, self.format_)
 
 
 class VideoEncoder:
@@ -65,14 +78,14 @@ class RecorderProcess(multiprocessing.Process):
 
 
 class ConvertProcess(multiprocessing.Process):
-    def __init__(self, img_queue, buffered_frames, trim_send, length, fps, ext, quality):
+    def __init__(self, img_queue, buffered_frames, trim_send, length, fps, format_, quality, verbose=True):
         multiprocessing.Process.__init__(self)
         self.img_queue = img_queue
-        self.buffered_frames = buffered_frames
-        self.trim_send = trim_send
+        self.frames = buffered_frames
+        self.trim_signal = trim_send
         self.length = length
         self.fps = fps
-        self.ext = ext
+        self.format_ = format_
         self.quality = quality
         self.cnt = 0
 
@@ -83,16 +96,16 @@ class ConvertProcess(multiprocessing.Process):
         while "There are screenshots":
             if self.cnt == self.length * 2 * self.fps:
                 self.cnt = self.length
-                self.trim_send.send("TRIM")
+                self.trim_signal.send("TRIM")
 
             sct_img = self.img_queue.get()
             # print("Got an image")
             if sct_img is None:
-                self.trim_send.send("KILL")
+                self.trim_signal.send("KILL")
                 break
 
-            buffer = img_to_buffer(sct_img, self.ext, self.quality)
-            self.buffered_frames.append(buffer)
+            frame = Frame(sct_img, self.format_, self.quality)
+            self.frames.append(frame)
             self.cnt += 1
 
 
@@ -119,7 +132,7 @@ class Capture:
         # Recording options
         self.display = display
         self.quality = resolution  # quality of the saved frames (increase for more ram usage)
-        self.ext = "JPEG"
+        self.format_ = "JPEG"
         self.fps = fps
         self.interval = (1 / self.fps) * pow(10, 9)  # interval between frames
         self.length = length
@@ -142,7 +155,7 @@ class Capture:
 
         self.rec_process = RecorderProcess(self.img_queue, self.rec_recv, copy(self.interval))
         self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames, self.trim_send,
-                                           copy(self.length), copy(self.fps), copy(self.ext), copy(self.quality))
+                                           copy(self.length), copy(self.fps), copy(self.format_), copy(self.quality))
         self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps))
 
     @classmethod
@@ -190,10 +203,7 @@ class Capture:
         self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps))
 
     def get_snapshot(self):
-        # print("Get snapshot")
-        # print(self.buffered_frames)
-        self.exported_frames = self.buffered_frames[:self.length*self.fps]
-        return list(self.exported_frames)
+        return self.video_encoder.encode(list(self.buffered_frames[:self.length*self.fps]), self.fps)
 
     def get_screenshot(self):
         ...
