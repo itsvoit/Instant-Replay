@@ -244,14 +244,14 @@ class UiMainWindow(QMainWindow):
 
         return storage_line
 
-    def make_slider(self, name, geometry, min, max):
+    def make_slider(self, name, geometry, min_, max_):
         slider = QtWidgets.QSlider(self.option)
         slider.setGeometry(QtCore.QRect(geometry[0], geometry[1], 181, 32))
         font = QtGui.QFont()
         font.setPointSize(11)
         slider.setFont(font)
-        slider.setMinimum(min)
-        slider.setMaximum(max)
+        slider.setMinimum(min_)
+        slider.setMaximum(max_)
         slider.setOrientation(QtCore.Qt.Horizontal)
         slider.setObjectName(name)
 
@@ -300,23 +300,23 @@ class UiMainWindow(QMainWindow):
 
         return display
 
-    def make_horizontal_slider(self, name, geometry, min, max):
+    def make_horizontal_slider(self, name, geometry, min_, max_):
         horizontal_slider = QtWidgets.QSlider(self.option)
         horizontal_slider.setGeometry(QtCore.QRect(geometry[0], geometry[1], 181, 32))
         font = QtGui.QFont()
         font.setPointSize(11)
         horizontal_slider.setFont(font)
-        horizontal_slider.setMinimum(min)
-        horizontal_slider.setMaximum(max)
+        horizontal_slider.setMinimum(min_)
+        horizontal_slider.setMaximum(max_)
         horizontal_slider.setProperty("value", 10)
         horizontal_slider.setOrientation(QtCore.Qt.Horizontal)
         horizontal_slider.setObjectName(name)
 
         return horizontal_slider
 
-    def make_line(self, name, geomtery):
+    def make_line(self, name, geometry):
         path = QtWidgets.QLineEdit(self.option)
-        path.setGeometry(QtCore.QRect(geomtery[0], geomtery[1], 182, 32))
+        path.setGeometry(QtCore.QRect(geometry[0], geometry[1], 182, 32))
         font = QtGui.QFont()
         font.setPointSize(11)
         path.setFont(font)
@@ -351,7 +351,7 @@ class UiMainWindow(QMainWindow):
         self.v_storage_line.setText(settings['video_path'])
         self.s_storage_line.setText(settings['screen_path'])
 
-        self.ram_display.display(settings['ram_ussage'])
+        self.ram_display.display(settings['ram_usage'])
 
     def restart_settings(self):
         self.show_settings(self.controller.get_default_settings())
@@ -368,9 +368,9 @@ class UiMainWindow(QMainWindow):
                         'duration': self.duration_horizontal_slider.value(),
                         'video_path': self.v_storage_line.text(),
                         'screen_path': self.s_storage_line.text(),
-                        'ram_ussage': 0}
-        ram_ussage = self.controller.save_settings(new_settings)
-        new_settings['ram_ussage'] = ram_ussage
+                        'ram_usage': 0}
+        ram_usage = self.controller.save_settings(new_settings)
+        new_settings['ram_usage'] = ram_usage
         self.show_settings(new_settings)
 
     def browse_v_storage(self):

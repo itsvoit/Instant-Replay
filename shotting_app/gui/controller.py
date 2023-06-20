@@ -14,18 +14,18 @@ class Controller:
         sys.exit(app.exec())
 
     def get_user_settings(self):
-        #najlepsza opcja byloby chyba zwracanie slownika <wartość: lista wartosci>,
+        # najlepsza opcja byloby chyba zwracanie slownika <wartość: lista wartosci>,
         # bo boxy i inne, przyjmuja liste stringow i moge dodac od razu te opcje
         # no i pierwsza wartoscia jest jest opcja z .conf
 
-        return ... #todo zwraca slownik z ustawieniami
+        return ...  # todo zwraca slownik z ustawieniami
 
     def get_default_settings(self):
-        return ... #todo zwraca default ustawienia
+        return ...  # todo zwraca default ustawienia
 
     def save_settings(self, settings):
-        #todo zapisuje wartosc settings, wczesniej musi byc zrobione obliczanie ramu
-        # i wpisanie wartosci do settings['ram_ussage'], po tym zwraca settings['ram_ussage']
+        # todo zapisuje wartosc settings, wczesniej musi byc zrobione obliczanie ramu
+        # i wpisanie wartosci do settings['ram_usage'], po tym zwraca settings['ram_usage']
         return ...
 
     def start_capture(self):
