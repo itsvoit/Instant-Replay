@@ -1,14 +1,10 @@
-import logging
+import json
+import sys
 import time
+from copy import copy
 
-from shotting_app.video_encoders import Mp4VideoEncoder
-from shotting_app import values
-# from shotting_app.gui import controller
-# from shotting_app.gui import settings
 import shotting_app.capture as capture
-
-
-# from shotting_app import video_encoders
+import shotting_app.values as values
 
 
 def _init_logging():
@@ -16,13 +12,27 @@ def _init_logging():
 
 
 def _instances_active() -> bool:
-    ...
+    return False
 
 
 def _get_config(file_name):
-    # if not found, create a new one
+    try:
+        with open(file_name, "r") as config:
+            out_conf = json.load(config)
+            for key in values.DEFAULT_CONFIG.keys():
+                if key not in out_conf:
+                    out_conf[key] = values.DEFAULT_CONFIG[key]
 
-    return None
+    except IOError:  # if not found, create a new one
+        out_conf = copy(values.DEFAULT_CONFIG)
+    except json.decoder.JSONDecodeError:
+        out_conf = copy(values.DEFAULT_CONFIG)
+    return out_conf
+
+
+def _save_config(config, file_name):
+    with open(file_name, 'w') as file:
+        json.dump(config, file, indent=4)
 
 
 def _create_guis():
@@ -37,27 +47,59 @@ def _run_gui():
     ...
 
 
-def _start_capture():
+def _create_hotkeys(app_config):
     ...
 
 
-def _create_hotkeys():
-    ...
+def conf_test(cap):
+    cap.verbose = True
+    cap.start_recording()
+    time.sleep(15)
+    cap.get_recording()
+    time.sleep(5)
+    cap.get_recording()
+    time.sleep(20)
+    cap.stop_recording()
 
 
 def _launch_app():
     app_config = _get_config(values.CONFIG_FILE_NAME)
+    try:
+        capture.ENCODERS[app_config['codec']]
+    except KeyError:
+        app_config['codec'] = 'mp4'
+    finally:
+        encoder = capture.ENCODERS[app_config['codec']]
+
+    _save_config(app_config, values.CONFIG_FILE_NAME)
+    cap = capture.Capture.from_config(app_config, encoder(app_config['fps']))
+
     _create_guis()
 
-    if app_config.tray:
+    if app_config['tray']:
         _run_tray()
     else:
         _run_gui()
 
-    if app_config.start_capture:
-        _start_capture()
+    _create_hotkeys(app_config)
 
-    _create_hotkeys()
+    if app_config['start_capture']:
+        cap.start_recording()
+
+    conf_test(cap)
+
+def capture_test():
+    fps = 15
+    length = 3
+
+    cap = capture.Capture(video_encoder=capture.Mp4VideoEncoder(fps), fps=fps, length=length, verbose=True)
+    cap.start_recording()
+    time.sleep(5)
+    cap.get_recording()
+    cap.stop_recording()
+
+    # with open("test_recording.mp4", mode="wb") as file:
+    #     file.write(snapshot.getbuffer().tobytes())
 
 
 # Main app script
@@ -75,19 +117,10 @@ if __name__ == "__main__":
         -  start the Capture OR wait for user to start it
         -  listen for the shortcuts
     """
-    # _init_logging()
-    # if _instances_active():
-    #     # log "other instance running and exit
-    #     pass
-    # _launch_app()
-    fps = 15
-    length = 3
+    _init_logging()
+    if _instances_active():
+        # log "other instance running and exit
+        sys.exit(1)
+    _launch_app()
 
-    capture = capture.Capture(video_encoder=Mp4VideoEncoder(fps), fps=fps, length=length, verbose=True)
-    capture.start_recording()
-    time.sleep(5)
-    capture.get_recording()
-    capture.stop_recording()
 
-    # with open("test_recording.mp4", mode="wb") as file:
-    #     file.write(snapshot.getbuffer().tobytes())
