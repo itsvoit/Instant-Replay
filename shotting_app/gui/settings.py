@@ -1,4 +1,4 @@
-from controller import Controller
+from shotting_app.gui.controller import Controller
 
 
 # gui for the settings

@@ -1,7 +1,7 @@
 import logging
 
 import shotting_app.values as values
-import shotting_app.gui.controller as controller
+from shotting_app.gui.controller import Controller
 import shotting_app.gui.settings as setting
 import shotting_app.capture as capture
 import shotting_app.video_encoders as video_encoders
@@ -30,7 +30,7 @@ def _run_tray():
 
 
 def _run_gui():
-    ...
+    controller = Controller()
 
 
 def _start_capture():
@@ -45,15 +45,15 @@ def _launch_app():
     app_config = _get_config(values.CONFIG_FILE_NAME)
     _create_guis()
 
-    if app_config.tray:
-        _run_tray()
-    else:
-        _run_gui()
+    # if app_config.tray:
+    #     _run_tray()
+    # else:
+    _run_gui()
 
-    if app_config.start_capture:
-        _start_capture()
-
-    _create_hotkeys()
+    # if app_config.start_capture:
+    #     _start_capture()
+    #
+    # _create_hotkeys()
 
 
 # Main app script

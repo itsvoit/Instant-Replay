@@ -1,4 +1,4 @@
-from capture import VideoEncoder
+from shotting_app.capture import VideoEncoder
 
 
 class Mp4VideoEncoder(VideoEncoder):

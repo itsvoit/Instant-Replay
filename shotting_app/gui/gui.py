@@ -16,10 +16,10 @@ class UiMainWindow(QMainWindow):
 
     def __init__(self, controller):
         super().__init__()
-        self.main_window.setObjectName("Screen Recorder")
-        self.main_window.resize(875, 612)
-        self.main_window.setMinimumSize(QtCore.QSize(875, 612))
-        self.main_window.setMaximumSize(QtCore.QSize(875, 612))
+        self.setObjectName("Screen Recorder")
+        self.resize(875, 612)
+        self.setMinimumSize(QtCore.QSize(875, 612))
+        self.setMaximumSize(QtCore.QSize(875, 612))
 
         self.controller = controller
         self.central_widget = self.make_central_widget()
@@ -27,18 +27,18 @@ class UiMainWindow(QMainWindow):
         self.menu_vertica_layout = self.make_menu_layout()
         self.option_v_layout = self.make_vertical_layaut("verticalLayout_4", self.full_menu_widget)
 
-        self.option_button = self.make_menu_button("option_button", ":/icons/settings_cogwheel_options_icon_149387.png")
-        self.option_button.clicked.connect(self.select_option_widget())
+        self.option_button = self.make_menu_button("option_button", "./icons/settings_cogwheel_options_icon_149387.png")
+        self.option_button.clicked.connect(self.select_option_widget)
 
         self.menu_vertica_layout.addWidget(self.option_button)
 
         self.video_button = self.make_menu_button("video_button",
-                                                  ":/icons/movie-symbol-of-video-camera_icon-icons.com_72981.png")
+                                                  "./icons/movie-symbol-of-video-camera_icon-icons.com_72981.png")
 
         self.menu_vertica_layout.addWidget(self.video_button)
 
         self.editor_button = self.make_menu_button("editor_button",
-                                                   ":/icons/iconfinder-videoeditingeditorslicecrop-3993845_112640.png")
+                                                   "./icons/iconfinder-videoeditingeditorslicecrop-3993845_112640.png")
 
         self.menu_vertica_layout.addWidget(self.editor_button)
 
@@ -47,7 +47,7 @@ class UiMainWindow(QMainWindow):
 
         self.option_v_layout.addLayout(self.menu_vertica_layout)
 
-        self.exit_button = self.make_menu_button("exit_button", ":/icons/powercircleandlinesymbol_118369.png")
+        self.exit_button = self.make_menu_button("exit_button", "./icons/powercircleandlinesymbol_118369.png")
 
         self.option_v_layout.addWidget(self.exit_button)
         self.exit_button.clicked.connect(self.close_app)
@@ -120,7 +120,7 @@ class UiMainWindow(QMainWindow):
         self.reset_button.clicked.connect(self.restart_settings)
 
         self.save_button = self.make_button("save_button", (590, 570))
-        self.save_button = self.save_button.clicked.connect(self.save_settings)
+        self.save_button.clicked.connect(self.save_settings)
 
         self.duration_horizontal_slider = self.make_horizontal_slider("duration_slider", (270, 380), 10, 120)
 
@@ -146,7 +146,7 @@ class UiMainWindow(QMainWindow):
         self.video_editor.setObjectName("video_editor")
 
         self.main_stacked_widget.addWidget(self.video_editor)
-        self.main_window.setCentralWidget(self.central_widget)
+        self.setCentralWidget(self.central_widget)
 
         self.retranslateUi()
 
@@ -156,10 +156,11 @@ class UiMainWindow(QMainWindow):
 
         self.duration_horizontal_slider.valueChanged['int'].connect(self.v_dur_display.display)
 
-        QtCore.QMetaObject.connectSlotsByName(self.main_window)
+        self.show_user_settings()
+        QtCore.QMetaObject.connectSlotsByName(self)
 
     def make_central_widget(self):
-        central_widget = QtWidgets.QWidget(self.main_window)
+        central_widget = QtWidgets.QWidget(self)
         central_widget.setObjectName("central_widget")
 
         return central_widget
@@ -325,7 +326,7 @@ class UiMainWindow(QMainWindow):
         return path
 
     def close_app(self):
-        self.main_winow.close()
+        self.close()
 
     def select_option_widget(self):
         self.main_stacked_widget.setCurrentIndex(0)
@@ -334,17 +335,25 @@ class UiMainWindow(QMainWindow):
         self.show_settings(self.controller.get_user_settings())
 
     def show_settings(self, settings):
+        self.resolution_combo_box.clear()
         self.resolution_combo_box.addItems(settings['resolution'])
         self.resolution_combo_box.setCurrentIndex(0)
+
+        self.FPS_combo_box.clear()
         self.FPS_combo_box.addItems(settings['fps'])
         self.FPS_combo_box.setCurrentIndex(0)
+
+        self.codec_combo_box.clear()
         self.codec_combo_box.addItems(settings['codec'])
         self.codec_combo_box.setCurrentIndex(0)
+
+        self.display_combo_box.clear()
         self.display_combo_box.addItems(settings['display'])
         self.display_combo_box.setCurrentIndex(0)
 
         self.video_hotkey.setText(settings['video_hotkey'])
         self.screen_hotkey.setText(settings['screen_hotkey'])
+
         self.sounds_button.setChecked(settings['save_sound'])
         self.quality_slider.setValue(settings['quality'])
         self.duration_horizontal_slider.setValue(settings['duration'])
@@ -369,9 +378,9 @@ class UiMainWindow(QMainWindow):
                         'video_path': self.v_storage_line.text(),
                         'screen_path': self.s_storage_line.text(),
                         'ram_usage': 0}
-        ram_usage = self.controller.save_settings(new_settings)
-        new_settings['ram_usage'] = ram_usage
-        self.show_settings(new_settings)
+
+        settings = self.controller.save_settings(new_settings)
+        self.show_settings(settings)
 
     def browse_v_storage(self):
         folder = QFileDialog.getExistingDirectory(QMainWindow(), "Wybierz folder")
@@ -383,7 +392,7 @@ class UiMainWindow(QMainWindow):
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        self.main_window.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.setWindowTitle(_translate("MainWindow", "MainWindow"))
         self.option_button.setText(_translate("MainWindow", "Option"))
         self.video_button.setText(_translate("MainWindow", "Video"))
         self.editor_button.setText(_translate("MainWindow", "Video editor"))
