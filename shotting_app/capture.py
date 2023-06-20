@@ -272,6 +272,7 @@ class Capture:
         )
 
     def start_recording(self):
+        # todo wait for processes to start and return True
         if self.verbose:
             self.rec_process.verbose = True
             self.conv_process.verbose = True
@@ -282,6 +283,7 @@ class Capture:
         self.trim_process.start()
 
     def stop_recording(self):
+        # todo wait for processes to finish and return True
         if not self.rec_process.is_alive():
             if self.verbose:
                 print("[Capture] Process is unalived")
