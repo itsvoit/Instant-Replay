@@ -1,10 +1,11 @@
-import logging
+import json
+import sys
+import time
+from copy import copy
 
 import shotting_app.values as values
 from shotting_app.gui.controller import Controller
-import shotting_app.gui.settings as setting
 import shotting_app.capture as capture
-import shotting_app.video_encoders as video_encoders
 
 
 def _init_logging():
@@ -12,13 +13,27 @@ def _init_logging():
 
 
 def _instances_active() -> bool:
-    ...
+    return False
 
 
 def _get_config(file_name):
-    # if not found, create a new one
+    try:
+        with open(file_name, "r") as config:
+            out_conf = json.load(config)
+            for key in values.DEFAULT_CONFIG.keys():
+                if key not in out_conf:
+                    out_conf[key] = values.DEFAULT_CONFIG[key]
 
-    return None
+    except IOError:  # if not found, create a new one
+        out_conf = copy(values.DEFAULT_CONFIG)
+    except json.decoder.JSONDecodeError:
+        out_conf = copy(values.DEFAULT_CONFIG)
+    return out_conf
+
+
+def _save_config(config, file_name):
+    with open(file_name, 'w') as file:
+        json.dump(config, file, indent=4)
 
 
 def _create_guis():
@@ -33,27 +48,44 @@ def _run_gui():
     controller = Controller()
 
 
-def _start_capture():
+def _create_hotkeys(app_config):
     ...
 
 
-def _create_hotkeys():
-    ...
+def conf_test(cap):
+    cap.verbose = True
+    cap.start_recording()
+    time.sleep(15)
+    cap.get_recording()
+    time.sleep(5)
+    cap.get_recording()
+    time.sleep(20)
+    cap.stop_recording()
 
 
 def _launch_app():
     app_config = _get_config(values.CONFIG_FILE_NAME)
+    try:
+        capture.ENCODERS[app_config['codec']]
+    except KeyError:
+        app_config['codec'] = 'mp4'
+    finally:
+        encoder = capture.ENCODERS[app_config['codec']]
+
+    _save_config(app_config, values.CONFIG_FILE_NAME)
+    cap = capture.Capture.from_config(app_config, encoder(app_config['fps']))
+
     _create_guis()
 
-    # if app_config.tray:
-    #     _run_tray()
-    # else:
-    _run_gui()
+    if app_config['tray']:
+        _run_tray()
+    else:
+        _run_gui()
 
-    # if app_config.start_capture:
-    #     _start_capture()
-    #
-    # _create_hotkeys()
+    _create_hotkeys(app_config)
+
+    if app_config['start_capture']:
+        cap.start_recording()
 
 
 # Main app script
@@ -74,6 +106,5 @@ if __name__ == "__main__":
     _init_logging()
     if _instances_active():
         # log "other instance running and exit
-        pass
+        sys.exit(1)
     _launch_app()
-
