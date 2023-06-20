@@ -192,10 +192,9 @@ class TrimProcess(multiprocessing.Process):
 
 
 class Capture:
-    def __init__(self, video_encoder: VideoEncoder, output_dir="videos", display=1, quality=80, fps=20, length=10,
+    def __init__(self, video_encoder: VideoEncoder, display=1, quality=80, fps=20, length=10,
                  with_sound: bool = False, verbose: bool = False):
         # Recording options
-        self.output_dir = output_dir
         self.display = display
         self.quality = quality  # quality of the saved frames (increase for more ram usage)
         self.format_ = values.CAPTURE_JPEG
@@ -212,7 +211,7 @@ class Capture:
         self.manager = Manager()
         self.buffered_frames = self.manager.list()
 
-        # Multiprocessing
+        # Multiprocessing communication
         self.img_queue = Queue()
         self.rec_recv, self.rec_send = Pipe(duplex=False)
         self.trim_recv, self.trim_send = Pipe(duplex=False)
@@ -269,11 +268,18 @@ class Capture:
                                            copy(self.length), copy(self.fps), copy(self.format_), copy(self.quality))
         self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps))
 
-    def get_snapshot(self):
+    def get_recording(self):
         frames = list(self.buffered_frames[-self.length * self.fps:])
         if self.verbose:
             print(f"[Capture] Exporting {len(frames)} frames")
-        return self.video_encoder.encode(frames, os.path.join(self.output_dir))
+        return self.video_encoder.encode(frames)
 
     def get_screenshot(self):
         return self.buffered_frames[-1]
+
+    def get_video_encoder(self):
+        return self.video_encoder
+
+    def get_config(self):
+        settings = {}  # todo create config/settings file from current state
+        return settings

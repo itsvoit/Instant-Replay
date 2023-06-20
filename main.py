@@ -86,7 +86,7 @@ if __name__ == "__main__":
     capture = capture.Capture(video_encoder=Mp4VideoEncoder(fps), fps=fps, length=length, verbose=True)
     capture.start_recording()
     time.sleep(15)
-    capture.get_snapshot()
+    capture.get_recording()
     capture.stop_recording()
 
     # with open("test_recording.mp4", mode="wb") as file:
