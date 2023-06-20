@@ -3,8 +3,9 @@ import sys
 import time
 from copy import copy
 
-import shotting_app.capture as capture
 import shotting_app.values as values
+from shotting_app.gui.controller import Controller
+import shotting_app.capture as capture
 
 
 def _init_logging():
@@ -44,7 +45,7 @@ def _run_tray():
 
 
 def _run_gui():
-    ...
+    controller = Controller()
 
 
 def _create_hotkeys(app_config):
@@ -86,21 +87,6 @@ def _launch_app():
     if app_config['start_capture']:
         cap.start_recording()
 
-    conf_test(cap)
-
-def capture_test():
-    fps = 15
-    length = 3
-
-    cap = capture.Capture(video_encoder=capture.Mp4VideoEncoder(fps), fps=fps, length=length, verbose=True)
-    cap.start_recording()
-    time.sleep(5)
-    cap.get_recording()
-    cap.stop_recording()
-
-    # with open("test_recording.mp4", mode="wb") as file:
-    #     file.write(snapshot.getbuffer().tobytes())
-
 
 # Main app script
 if __name__ == "__main__":
@@ -122,5 +108,3 @@ if __name__ == "__main__":
         # log "other instance running and exit
         sys.exit(1)
     _launch_app()
-
-
