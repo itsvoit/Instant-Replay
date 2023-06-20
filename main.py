@@ -80,12 +80,12 @@ if __name__ == "__main__":
     #     # log "other instance running and exit
     #     pass
     # _launch_app()
-    fps = 30
-    length = 10
+    fps = 15
+    length = 3
 
     capture = capture.Capture(video_encoder=Mp4VideoEncoder(fps), fps=fps, length=length, verbose=True)
     capture.start_recording()
-    time.sleep(15)
+    time.sleep(5)
     capture.get_recording()
     capture.stop_recording()
 

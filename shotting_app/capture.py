@@ -65,17 +65,31 @@ class FileSaver:
         self._mkdir_p()
         files = [(file, match) for file in os.listdir(self.directory)
                  if (match :=
-                     re.match(re.escape(self.file_prefix) + r"(?P<value>.*)" + re.escape(self.file_extension), file)
+                     re.match(re.escape(self.file_prefix) + r"_(?P<value>.*)\." + re.escape(self.file_extension), file)
                      )]
 
+        vals = set()
         for file, match in files:
-            ...
+            try:
+                vals.add(int(match['value']))
+            except ValueError:
+                pass
+
+        cnt = 0
+        for val in sorted(vals):
+            if val == cnt:
+                cnt += 1
+            else:
+                break
+
+        return os.path.join(self.directory, self.file_prefix + "_" + str(cnt) + "." + self.file_extension)
 
 
 class VideoEncoder:
     def __init__(self, fps, screen_size, file_saver: FileSaver):
         self.fps = fps
         self.screen_size = screen_size
+        self.file_saver = file_saver
 
     @abstractmethod
     def encode(self, frames: list[Frame]):

@@ -13,10 +13,9 @@ class Mp4VideoEncoder(capture.VideoEncoder):
 
     # noinspection PyUnresolvedReferences
     def encode(self, frames: list[capture.Frame]):
-        # output_buffer = BytesIO()
         output_path = self.file_saver.get_free_path()
 
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # todo restrict based on the extension of the FileSaver
         out = cv2.VideoWriter(output_path, fourcc, self.fps, self.screen_size)
 
         for frame in frames:
