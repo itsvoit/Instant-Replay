@@ -1,3 +1,6 @@
 
 
 CONFIG_FILE_NAME = "config.conf"
+CAPTURE_JPEG = "JPEG"
+TASK_KILL = "KILL"
+TASK_TRIM = "TRIM"

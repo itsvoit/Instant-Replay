@@ -1,10 +1,14 @@
 import logging
+import time
 
-import shotting_app.values as values
-import shotting_app.gui.controller as controller
-import shotting_app.gui.settings as setting
+from shotting_app.video_encoders import Mp4VideoEncoder
+from shotting_app import values
+# from shotting_app.gui import controller
+# from shotting_app.gui import settings
 import shotting_app.capture as capture
-import shotting_app.video_encoders as video_encoders
+
+
+# from shotting_app import video_encoders
 
 
 def _init_logging():
@@ -71,9 +75,19 @@ if __name__ == "__main__":
         -  start the Capture OR wait for user to start it
         -  listen for the shortcuts
     """
-    _init_logging()
-    if _instances_active():
-        # log "other instance running and exit
-        pass
-    _launch_app()
+    # _init_logging()
+    # if _instances_active():
+    #     # log "other instance running and exit
+    #     pass
+    # _launch_app()
+    fps = 15
+    length = 3
 
+    capture = capture.Capture(video_encoder=Mp4VideoEncoder(fps), fps=fps, length=length, verbose=True)
+    capture.start_recording()
+    time.sleep(5)
+    capture.get_recording()
+    capture.stop_recording()
+
+    # with open("test_recording.mp4", mode="wb") as file:
+    #     file.write(snapshot.getbuffer().tobytes())
