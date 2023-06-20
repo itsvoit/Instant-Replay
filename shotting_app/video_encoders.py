@@ -24,6 +24,7 @@ class Mp4VideoEncoder(capture.VideoEncoder):
 
 
 class SomeOtherVideoEncoder(capture.VideoEncoder):
+    # todo new encoding
     def __init__(self, fps, screen_size=(1920, 1080),
                  file_saver: capture.FileSaver = capture.FileSaver("videos", "video", "mp4")):
         super().__init__(fps, screen_size, file_saver)

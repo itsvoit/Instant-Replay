@@ -61,7 +61,6 @@ class FileSaver:
                 raise
 
     def get_free_path(self):
-        # todo - figure out a way to save files
         self._mkdir_p()
         files = [(file, match) for file in os.listdir(self.directory)
                  if (match :=
@@ -211,11 +210,11 @@ class Capture:
         # Recording options
         self.display = display
         self.quality = quality  # quality of the saved frames (increase for more ram usage)
-        self.format_ = values.CAPTURE_JPEG
+        self.format_ = values.CAPTURE_JPEG  # todo add new extensions
         self.fps = fps
         self.interval = (1 / self.fps) * pow(10, 9)  # interval between frames in nanoseconds
         self.length = length
-        self.with_sound = with_sound
+        self.with_sound = with_sound  # todo add sound recording or ditch it
         self.video_encoder = video_encoder
 
         # Logging
