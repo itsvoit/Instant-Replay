@@ -42,15 +42,28 @@ class UiMainWindow(QMainWindow):
 
         self.menu_vertica_layout.addWidget(self.editor_button)
 
-        spacerItem = QtWidgets.QSpacerItem(20, 40, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem = QtWidgets.QSpacerItem(20, 170)
+        self.menu_vertica_layout.addItem(spacerItem)
+
+        self.start_button = self.make_menu_button("start_button",
+                                                  "./icons/active_audio_start_player_button_music_play_icon_219332.png")
+        self.start_button.clicked.connect(self.satrt_capturing)
+        self.menu_vertica_layout.addWidget(self.start_button)
+        # self.menu_vertica_layout.addWidget(QtWidgets.QLabel())
+
+        self.stop_button = self.make_menu_button("stop_button", "./icons/squareinsideacircle_120602.png")
+        self.stop_button.clicked.connect(self.stop_capturing)
+        self.menu_vertica_layout.addWidget(self.stop_button)
+
+        spacerItem = QtWidgets.QSpacerItem(20, 250, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
         self.menu_vertica_layout.addItem(spacerItem)
 
         self.option_v_layout.addLayout(self.menu_vertica_layout)
 
         self.exit_button = self.make_menu_button("exit_button", "./icons/powercircleandlinesymbol_118369.png")
 
-        self.option_v_layout.addWidget(self.exit_button)
         self.exit_button.clicked.connect(self.close_app)
+        self.option_v_layout.addWidget(self.exit_button)
 
         self.main_widget = self.make_main_widget()
         self.main_stacked_widget = self.make_stacked_widget()
@@ -60,15 +73,18 @@ class UiMainWindow(QMainWindow):
 
         self.resolution_combo_box = self.make_combo_box("resolution_combo_box", (270, 30))
         self.FPS_combo_box = self.make_combo_box('FPS_combo_box', (270, 80))
-        self.codec_combo_box = self.make_combo_box('codec_combo_box', (270, 130))
+        self.extension_combo_box = self.make_combo_box('extention_combo_box', (270, 130))
         self.display_combo_box = self.make_combo_box('display_combo_box', (270, 530))
 
         self.s_storage_line = self.make_storage_line('s_storage_line', (270, 480))
+        self.s_storage_line.setDisabled(True)
         self.v_storage_line = self.make_storage_line("v_storage_line", (270, 430))
+        self.v_storage_line.setDisabled(True)
 
-        self.quality_slider = self.make_slider("quality_slider", (270, 330), 0, 100)
+        self.quality_slider = self.make_slider("quality_slider", (270, 330), 1, 95)
 
         self.sounds_button = self.make_check_button("sounds_button", (350, 280))
+        self.sounds_button.setDisabled(True)
 
         self.layout_widget_labels = self.make_layout_widget_for_label()
 
@@ -81,8 +97,8 @@ class UiMainWindow(QMainWindow):
         self.FPS_label = self.make_label("FPS_label", self.layout_widget_labels)
         self.menu_label_vertica_layout.addWidget(self.FPS_label)
 
-        self.Codec_label = self.make_label("codec_label", self.layout_widget_labels)
-        self.menu_label_vertica_layout.addWidget(self.Codec_label)
+        self.extension_label = self.make_label("extension_label", self.layout_widget_labels)
+        self.menu_label_vertica_layout.addWidget(self.extension_label)
 
         self.v_hotkey = self.make_label("v_hotkey", self.layout_widget_labels)
         self.menu_label_vertica_layout.addWidget(self.v_hotkey)
@@ -158,6 +174,12 @@ class UiMainWindow(QMainWindow):
 
         self.show_user_settings()
         QtCore.QMetaObject.connectSlotsByName(self)
+
+    def satrt_capturing(self):
+        self.controller.start_capture()
+
+    def stop_capturing(self):
+        self.controller.stop_capture()
 
     def make_central_widget(self):
         central_widget = QtWidgets.QWidget(self)
@@ -343,9 +365,9 @@ class UiMainWindow(QMainWindow):
         self.FPS_combo_box.addItems(settings['fps'])
         self.FPS_combo_box.setCurrentIndex(0)
 
-        self.codec_combo_box.clear()
-        self.codec_combo_box.addItems(settings['codec'])
-        self.codec_combo_box.setCurrentIndex(0)
+        self.extension_combo_box.clear()
+        self.extension_combo_box.addItems(settings['codec'])
+        self.extension_combo_box.setCurrentIndex(0)
 
         self.display_combo_box.clear()
         self.display_combo_box.addItems(settings['display'])
@@ -368,7 +390,7 @@ class UiMainWindow(QMainWindow):
     def save_settings(self):
         new_settings = {'resolution': self.resolution_combo_box.currentText(),
                         'fps': self.FPS_combo_box.currentText(),
-                        'codec': self.codec_combo_box.currentText(),
+                        'codec': self.extension_combo_box.currentText(),
                         'display': self.display_combo_box.currentText(),
                         'video_hotkey': self.video_hotkey.text(),
                         'screen_hotkey': self.screen_hotkey.text(),
@@ -384,32 +406,36 @@ class UiMainWindow(QMainWindow):
 
     def browse_v_storage(self):
         folder = QFileDialog.getExistingDirectory(QMainWindow(), "Wybierz folder")
-        self.v_storage_line.setText(folder)
+        if folder:
+            self.v_storage_line.setText(folder)
 
     def browse_s_storage(self):
         folder = QFileDialog.getExistingDirectory(QMainWindow(), "Wybierz folder")
-        self.s_storage_line.setText(folder)
+        if folder:
+            self.s_storage_line.setText(folder)
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.option_button.setText(_translate("MainWindow", "Option"))
-        self.video_button.setText(_translate("MainWindow", "Video"))
-        self.editor_button.setText(_translate("MainWindow", "Video editor"))
-        self.exit_button.setText(_translate("MainWindow", "Exit"))
-        self.resolution_label.setText(_translate("MainWindow", "Resolution"))
-        self.FPS_label.setText(_translate("MainWindow", "FPS"))
-        self.Codec_label.setText(_translate("MainWindow", "Codec"))
-        self.v_hotkey.setText(_translate("MainWindow", "Video Hotkey"))
-        self.s_hotkey.setText(_translate("MainWindow", "Screen Hotkey"))
-        self.sound_label.setText(_translate("MainWindow", "Save with sounds"))
-        self.quality_label.setText(_translate("MainWindow", "Bitrate/Quality"))
-        self.duration_label.setText(_translate("MainWindow", "Video duration (s)"))
-        self.v_storage_label.setText(_translate("MainWindow", "Video storage path"))
-        self.s_storage_label.setText(_translate("MainWindow", "Screen storage path"))
-        self.display_label.setText(_translate("MainWindow", "Display"))
-        self.v_storage_browse.setText(_translate("MainWindow", "Browse"))
-        self.s_storage_browse.setText(_translate("MainWindow", "Browse"))
-        self.reset_button.setText(_translate("MainWindow", "Reset"))
-        self.save_button.setText(_translate("MainWindow", "Save"))
-        self.ram_label.setText(_translate("MainWindow", "RAM requirements (MB)"))
+        self.setWindowTitle(_translate("Screen Recorder", "Screen Recorder"))
+        self.option_button.setText(_translate("Screen Recorder", "Option"))
+        self.video_button.setText(_translate("Screen Recorder", "Video"))
+        self.editor_button.setText(_translate("Screen Recorder", "Video editor"))
+        self.start_button.setText(_translate("Screen Recorder", "Start"))
+        self.stop_button.setText(_translate("Screen Recorder", "Stop"))
+        self.exit_button.setText(_translate("Screen Recorder", "Exit"))
+        self.resolution_label.setText(_translate("Screen Recorder", "Resolution"))
+        self.FPS_label.setText(_translate("Screen Recorder", "FPS"))
+        self.extension_label.setText(_translate("Screen Recorder", "Extension"))
+        self.v_hotkey.setText(_translate("Screen Recorder", "Video Hotkey"))
+        self.s_hotkey.setText(_translate("Screen Recorder", "Screen Hotkey"))
+        self.sound_label.setText(_translate("Screen Recorder", "Save with sounds"))
+        self.quality_label.setText(_translate("Screen Recorder", "Bitrate/Quality"))
+        self.duration_label.setText(_translate("Screen Recorder", "Video duration (s)"))
+        self.v_storage_label.setText(_translate("Screen Recorder", "Video storage path"))
+        self.s_storage_label.setText(_translate("Screen Recorder", "Screen storage path"))
+        self.display_label.setText(_translate("Screen Recorder", "Display"))
+        self.v_storage_browse.setText(_translate("Screen Recorder", "Browse"))
+        self.s_storage_browse.setText(_translate("Screen Recorder", "Browse"))
+        self.reset_button.setText(_translate("Screen Recorder", "Reset"))
+        self.save_button.setText(_translate("Screen Recorder", "Save"))
+        self.ram_label.setText(_translate("Screen Recorder", "RAM requirements (MB)"))

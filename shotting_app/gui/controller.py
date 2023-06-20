@@ -11,7 +11,7 @@ class Controller:
         self.view = UiMainWindow(self)
         self.get_user_settings()
         self.view.show()
-        sys.exit(app.exec())
+        app.exec()
 
     def get_user_settings(self):
         # najlepsza opcja byloby chyba zwracanie slownika <wartość: lista wartosci>,
@@ -19,7 +19,7 @@ class Controller:
         # no i pierwsza wartoscia jest opcja z .conf
 
         # todo zwraca slownik z ustawieniami
-        return {'resolution': ['1920x1080'],
+        return {'resolution': ['1920x1080', '1280x720'],
                 'fps': ['15', '30','50', '60'],
                 'codec': ['H.264', 'H.265'],
                 'display': ['Screen 1', 'Screen 2'],
@@ -34,7 +34,7 @@ class Controller:
 
     def get_default_settings(self):
         # todo zwraca default ustawienia
-        return {'resolution': ['1920x1080'],
+        return {'resolution': ['1920x1080', '1280x720'],
                 'fps': ['15', '30', '50', '60'],
                 'codec': ['H.264', 'H.265'],
                 'display': ['Screen 1', 'Screen 2'],
@@ -49,7 +49,7 @@ class Controller:
 
     def save_settings(self, settings):
         # todo zapisuje wartosc settings, wczesniej musi byc zrobione obliczanie ramu
-        # i wpisanie wartosci do settings['ram_usage'], po tym zwraca settings['ram_usage']
+        #  i wpisanie wartosci do settings['ram_usage'], po tym zwraca settings['ram_usage']
         return {'resolution': ['1920x1080'],
                 'fps': ['15', '30', '50', '60'],
                 'codec': ['H.264', 'H.265'],
