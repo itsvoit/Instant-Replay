@@ -103,8 +103,9 @@ if __name__ == "__main__":
         -  start the Capture OR wait for user to start it
         -  listen for the shortcuts
     """
-    _init_logging()
-    if _instances_active():
-        # log "other instance running and exit
-        sys.exit(1)
-    _launch_app()
+    # _init_logging()
+    # if _instances_active():
+    #     # log "other instance running and exit
+    #     sys.exit(1)
+    # _launch_app()
+    _run_gui()

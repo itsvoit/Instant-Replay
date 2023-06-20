@@ -30,7 +30,7 @@ class Controller:
                 'duration': 30,
                 'video_path': './Wideo',
                 'screen_path': './ScreenShoots',
-                'ram_ussage': 400}
+                'ram_usage': 400}
 
     def get_default_settings(self):
         # todo zwraca default ustawienia
@@ -45,7 +45,7 @@ class Controller:
                 'duration': 30,
                 'video_path': './Wideo',
                 'screen_path': './ScreenShoots',
-                'ram_ussage': 400}
+                'ram_usage': 400}
 
     def save_settings(self, settings):
         # todo zapisuje wartosc settings, wczesniej musi byc zrobione obliczanie ramu
@@ -61,7 +61,7 @@ class Controller:
                 'duration': 30,
                 'video_path': './Wideo',
                 'screen_path': './ScreenShoots',
-                'ram_ussage': 400}
+                'ram_usage': 400}
 
     def start_capture(self):
         ...
