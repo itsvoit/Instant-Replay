@@ -290,7 +290,6 @@ class Capture:
         return True
 
     def stop_recording(self):
-        # todo wait for processes to finish and return True
         if not self.rec_process.is_alive():
             if self.verbose:
                 print("[Capture] Process is unalived")
