@@ -1,6 +1,7 @@
 import os
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
 
@@ -21,16 +22,17 @@ menu_button_style = '''
 
 class UiMainWindow(QMainWindow):
 
-    def __init__(self, controller):
+    def __init__(self, verbose=False):
         super().__init__()
+        self.verbose = verbose
         self.should_close = False
+
         self.setWindowIcon(QIcon("./icons/application_icon.png"))
         self.setObjectName("Screen Recorder")
         self.resize(875, 612)
         self.setMinimumSize(QtCore.QSize(875, 612))
         self.setMaximumSize(QtCore.QSize(875, 612))
 
-        self.controller = controller
         self.central_widget = self.make_central_widget()
         self.full_menu_widget = self.make_menu_widget()
         self.menu_vertical_layout = self.make_menu_layout()
@@ -59,14 +61,9 @@ class UiMainWindow(QMainWindow):
         self.option_v_layout.addLayout(self.menu_vertical_layout)
 
         self.option_button.clicked.connect(self.select_option_widget)
-        self.start_button.clicked.connect(self.start_capturing)
-        self.capture_button.clicked.connect(self.capture_video)
-        self.screenshot_button.clicked.connect(self.capture_screenshot)
-        self.stop_button.clicked.connect(self.stop_capturing)
 
         self.exit_button = self.make_menu_button("exit_button", "./icons/exit_icon.png")
 
-        self.exit_button.clicked.connect(self.close_button_action)
         self.option_v_layout.addWidget(self.exit_button)
 
         self.main_widget = self.make_main_widget()
@@ -83,12 +80,12 @@ class UiMainWindow(QMainWindow):
         self.quality_slider = self.make_slider("quality_slider", (270, 330), 1, 95)
 
         self.v_storage_line = self.make_storage_line("v_storage_line", (270, 430))
-        self.v_storage_line.setDisabled(True)
+        self.v_storage_line.setReadOnly(True)
 
         self.s_storage_line = self.make_storage_line('s_storage_line', (270, 480))
 
         self.display_combo_box = self.make_combo_box('display_combo_box', (270, 530))
-        self.s_storage_line.setDisabled(True)
+        self.s_storage_line.setReadOnly(True)
 
         self.layout_widget_labels = self.make_layout_widget_for_label()
 
@@ -137,18 +134,18 @@ class UiMainWindow(QMainWindow):
         self.duration_display = self.make_lcd_display("duration_display", (470, 330), 91, 32)
 
         self.reset_button = self.make_button("reset_button", (470, 570))
-        self.reset_button.clicked.connect(self.restart_settings)
 
         self.save_button = self.make_button("save_button", (590, 570))
-        self.save_button.clicked.connect(self.save_settings)
 
         self.duration_horizontal_slider = self.make_horizontal_slider("duration_slider", (270, 380), 10, 120)
 
         self.v_dur_display = self.make_lcd_display("v_dur_display", (470, 380), 91, 32)
 
         self.video_hotkey = self.make_line("video_path", (270, 230))
+        self.video_hotkey.setReadOnly(True)
 
         self.screen_hotkey = self.make_line("screen_path", (270, 280))
+        self.screen_hotkey.setReadOnly(True)
 
         self.ram_label = self.make_label("ram_req_label", self.option)
         self.ram_label.setGeometry(QtCore.QRect(480, 60, 201, 41))
@@ -378,6 +375,8 @@ class UiMainWindow(QMainWindow):
         if not self.should_close:
             event.ignore()
             self.hide()
+        elif self.verbose:
+            print("[GUI] Close event")
 
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.WindowStateChange:
@@ -388,56 +387,16 @@ class UiMainWindow(QMainWindow):
     # ---------------------------------------------------------------------------------
     # Event methods
 
-    def start_capturing(self):
-        self.controller.start_capture()
-
-    def stop_capturing(self):
-        self.controller.stop_capture()
-
-    def capture_video(self):
-        self.controller.export_replay()
-
-    def capture_screenshot(self):
-        self.controller.export_screenshot()
-
-    def close_button_action(self):
-        self.hide()
-
     def select_option_widget(self):
         self.main_stacked_widget.setCurrentIndex(0)
 
-    def show_settings(self, settings):
-        self.resolution_combo_box.clear()
-        self.FPS_combo_box.clear()
-        self.extension_combo_box.clear()
-        self.photo_extension_combo_box.clear()
-        self.display_combo_box.clear()
-
-        self.resolution_combo_box.addItems(settings['resolution'])
-        self.FPS_combo_box.addItems(settings['fps'])
-        self.extension_combo_box.addItems(settings['codec'])
-        self.photo_extension_combo_box.addItems(settings['p_ext'])
-        self.display_combo_box.addItems(settings['display'])
-
-        self.resolution_combo_box.setCurrentIndex(0)
-        self.FPS_combo_box.setCurrentIndex(0)
-        self.extension_combo_box.setCurrentIndex(0)
-        self.photo_extension_combo_box.setCurrentIndex(0)
-        self.display_combo_box.setCurrentIndex(0)
-
-        self.ram_display.display(self.controller.get_ram_usage())
-
-    def restart_settings(self):
-        self.controller.set_default_config()
-
-    def save_settings(self):
-        self.controller.update_config_from_gui()
-
+    @pyqtSlot()
     def browse_v_storage(self):
         folder = QFileDialog.getExistingDirectory(QMainWindow(), "Wybierz folder")
         if folder:
             self.v_storage_line.setText(folder)
 
+    @pyqtSlot()
     def browse_s_storage(self):
         folder = QFileDialog.getExistingDirectory(QMainWindow(), "Wybierz folder")
         if folder:
