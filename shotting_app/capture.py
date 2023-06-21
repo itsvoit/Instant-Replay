@@ -148,7 +148,6 @@ class RecorderProcess(multiprocessing.Process):
 
                 previous_shot = time.perf_counter_ns()
                 sct_img = sct.grab(mon)
-                # sct_img =
                 self.img_queue.put(sct_img)
 
         if self.verbose:
