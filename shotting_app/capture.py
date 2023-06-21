@@ -128,29 +128,57 @@ class RecorderProcess(multiprocessing.Process):
         # Logging
         self.verbose = verbose
 
+    # def run(self):
+    #     if self.verbose:
+    #         print("[Capture/Record] Recording process running...")
+    #     # recorder = dxcam.create(output_color="BGR")
+    #     # recorder.start(target_fps=60, video_mode=True)
+    #     with mss.mss() as sct:
+    #         mon = sct.monitors[self.display]
+    #         self.task.send(mon)
+    #         previous_shot = time.perf_counter_ns()
+    #         while "Recording":
+    #             if self.task.poll() and self.task.recv() == values.TASK_KILL:
+    #                 self.img_queue.put(None)
+    #                 break
+    #
+    #             # Wait to align the frames
+    #             while time.perf_counter_ns() < previous_shot + self.interval:
+    #                 pass
+    #
+    #             previous_shot = time.perf_counter_ns()
+    #             sct_img = sct.grab(mon)
+    #             print(sct_img.bgra)
+    #
+    #             self.img_queue.put(sct_img)
+    #
+    #     if self.verbose:
+    #         print("[Capture/Record] Recording process finishing...")
+
     def run(self):
         if self.verbose:
             print("[Capture/Record] Recording process running...")
-        # recorder = dxcam.create(output_color="BGR")
-        # recorder.start(target_fps=60, video_mode=True)
-        with dxcam.create(max_buffer_len=7200, output_color="BGR") as sct:
-            sct.start(target_fps=60, video_mode=True)
-            mon = sct.monitors[self.display]
-            self.task.send(mon)
+        recorder = dxcam.create(output_color="BGRA", device_idx=0)
+        recorder.start(target_fps=60, video_mode=True)
+        # mon = sct.monitors[self.display]
+        self.task.send(recorder.region)
+        previous_shot = time.perf_counter_ns()
+        while "Recording":
+            if self.task.poll() and self.task.recv() == values.TASK_KILL:
+                self.img_queue.put(None)
+                break
+
+            # Wait to align the frames
+            while time.perf_counter_ns() < previous_shot + self.interval:
+                pass
+
             previous_shot = time.perf_counter_ns()
-            while "Recording":
-                if self.task.poll() and self.task.recv() == values.TASK_KILL:
-                    self.img_queue.put(None)
-                    break
+            sct_img = recorder.get_latest_frame()
+            # print(sct_img)
 
-                # Wait to align the frames
-                while time.perf_counter_ns() < previous_shot + self.interval:
-                    pass
+            self.img_queue.put(sct_img)
 
-                previous_shot = time.perf_counter_ns()
-                sct_img = sct.grab(mon)
-                # sct_img =
-                self.img_queue.put(sct_img)
+        recorder.stop()
 
         if self.verbose:
             print("[Capture/Record] Recording process finishing...")
