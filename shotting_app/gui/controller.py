@@ -3,6 +3,7 @@ import os
 import sys
 from copy import copy
 
+import mss
 import qdarkstyle
 from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSlot, QObject
@@ -19,27 +20,18 @@ def save_config(config, file_name):
         json.dump(config, file, indent=4)
 
 
-def load_config(file_name):
-    try:
-        with open(file_name, "r") as config:
-            out_conf = json.load(config)
-            for key in values.DEFAULT_CONFIG.keys():
-                if key not in out_conf or out_conf[key] is None:
-                    out_conf[key] = values.DEFAULT_CONFIG[key]
-
-    except IOError:  # if not found, create a new one
-        out_conf = copy(values.DEFAULT_CONFIG)
-    except json.decoder.JSONDecodeError:
-        out_conf = copy(values.DEFAULT_CONFIG)
-    return out_conf
-
-
 def get_default_config():
     return values.DEFAULT_CONFIG
 
 
 def get_config_options():
     return values.ALL_CONFIG_VALUES
+
+
+def n_of_displays():
+    with mss.mss() as sct:
+        displays = len(sct.monitors)
+    return displays - 1
 
 
 class Controller(QObject):
@@ -50,9 +42,11 @@ class Controller(QObject):
 
         self.view = view
         self.create_tray()
-        self.config = load_config(values.CONFIG_FILE_NAME)
+        self.n_of_displays = n_of_displays()
+        self.config = self._load_config(values.CONFIG_FILE_NAME)
         self._set_config_options()
         self._show_config()
+
 
         # self.view.option_button.clicked.connect(self.select_option_widget)
         self.view.start_button.clicked.connect(self.start_capture)
@@ -161,6 +155,22 @@ class Controller(QObject):
             p_encoder(FileSaver(p_path, p_pref, p_ext)),
             verbose=self.verbose)
 
+    def _load_config(self, file_name):
+        try:
+            with open(file_name, "r") as config:
+                out_conf = json.load(config)
+                for key in values.DEFAULT_CONFIG.keys():
+                    if key not in out_conf or out_conf[key] is None:
+                        out_conf[key] = values.DEFAULT_CONFIG[key]
+                    if out_conf['display'] > self.n_of_displays:
+                        out_conf['display'] = 1
+
+        except IOError:  # if not found, create a new one
+            out_conf = copy(values.DEFAULT_CONFIG)
+        except json.decoder.JSONDecodeError:
+            out_conf = copy(values.DEFAULT_CONFIG)
+        return out_conf
+
     def _set_config_options(self):
         """
         Get all possible options and display them in view
@@ -170,7 +180,7 @@ class Controller(QObject):
         self.view.FPS_combo_box.addItems([str(x) for x in options['fps']])
         self.view.extension_combo_box.addItems([str(x) for x in options['codec']])
         self.view.photo_extension_combo_box.addItems([str(x) for x in options['p_ext']])
-        self.view.display_combo_box.addItems([str(x) for x in options['display']])
+        self.view.display_combo_box.addItems([f"Display {str(x)}" for x in range(1, self.n_of_displays+1)])
 
     def _setup_services(self):
         self.model = self._make_model()
@@ -185,20 +195,20 @@ class Controller(QObject):
         """
         if config is None:
             config = self.config
-        d_conf = get_config_options()
+        all_conf = get_config_options()
 
         # Set indices
-        resolution_index = d_conf['resolution'].index(config['resolution'])
-        fps_index = d_conf['fps'].index(config['fps'])
-        codec_index = d_conf['codec'].index(config['codec'])
-        p_ext_index = d_conf['p_ext'].index(config['p_ext'])
-        display_index = d_conf['display'].index(config['display'])
+        resolution_index = all_conf['resolution'].index(config['resolution'])
+        fps_index = all_conf['fps'].index(config['fps'])
+        codec_index = all_conf['codec'].index(config['codec'])
+        p_ext_index = all_conf['p_ext'].index(config['p_ext'])
+        display_index = config['display']
 
         self.view.resolution_combo_box.setCurrentIndex(resolution_index)
         self.view.FPS_combo_box.setCurrentIndex(fps_index)
         self.view.extension_combo_box.setCurrentIndex(codec_index)
         self.view.photo_extension_combo_box.setCurrentIndex(p_ext_index)
-        self.view.display_combo_box.setCurrentIndex(display_index)
+        self.view.display_combo_box.setCurrentIndex(display_index - 1)
 
         # Set values in view
         self.view.video_hotkey.setText(config['video_hotkey'])

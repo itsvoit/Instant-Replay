@@ -47,8 +47,7 @@ ALL_CONFIG_VALUES = {
                 'resolution': ['3840x2160', '2560x1440', '1920x1080', '1280x720'],
                 'fps': [10, 15, 20, 25, 30],
                 'codec': ['mp4'],
-                'p_ext': ["png", "jpeg"],
-                'display': [1, 2],  # todo recognise how many displays on load
+                'p_ext': ["png", "jpeg"]
 }
 
 
