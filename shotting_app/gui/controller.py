@@ -3,17 +3,18 @@ import os
 import sys
 from copy import copy
 
+import qdarkstyle
 from PyQt5 import QtCore
+from PyQt5.QtCore import pyqtSlot, QObject
 from PyQt5.QtWidgets import QApplication
 from infi.systray import SysTrayIcon
-from pynput import keyboard
+from pynput.keyboard import GlobalHotKeys
 
-from shotting_app import values, capture
-from shotting_app.gui.gui import UiMainWindow
-import qdarkstyle
+from shotting_app import values
+from shotting_app.capture.capture import Capture, VID_ENCODERS, P_ENCODERS, FileSaver
 
 
-def _save_config(config, file_name):
+def save_config(config, file_name):
     with open(file_name, 'w') as file:
         json.dump(config, file, indent=4)
 
@@ -41,20 +42,30 @@ def get_config_options():
     return values.ALL_CONFIG_VALUES
 
 
-class Controller:
-    def __init__(self):
-        app = QApplication(sys.argv)
-        app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
+class Controller(QObject):
+    def __init__(self, view, verbose=False):
+        super(Controller, self).__init__()
+        self.verbose = verbose
+        self.closed = False
 
+        self.view = view
+        self.create_tray()
         self.config = load_config(values.CONFIG_FILE_NAME)
-
-        self.view = UiMainWindow(self)
         self._set_config_options()
         self._show_config()
 
-        self.model = None
-        self.tray = None
-        self.hotkeys = None
+        # self.view.option_button.clicked.connect(self.select_option_widget)
+        self.view.start_button.clicked.connect(self.start_capture)
+        self.view.capture_button.clicked.connect(self.export_replay)
+        self.view.screenshot_button.clicked.connect(self.export_screenshot)
+        self.view.stop_button.clicked.connect(self.stop_capture)
+        self.view.exit_button.clicked.connect(self.close_app)
+        self.view.reset_button.clicked.connect(self.show_default_config)
+        self.view.save_button.clicked.connect(self.update_config_from_gui)
+        # self.view.video_hotkey.
+
+        self.model: Capture = None
+        self.hotkeys: GlobalHotKeys = None
 
         self._setup_services()
 
@@ -65,12 +76,11 @@ class Controller:
             self.model.start_recording()
 
         self.view.show()
-        sys.exit(app.exec())
 
-    def _make_hotkeys(self) -> keyboard.GlobalHotKeys:
+    def _make_hotkeys(self) -> GlobalHotKeys:
         """
         GlobalHotKeys object will use current hotkeys
-        :return: keyboard.GlobalHotKeys object ready to be started
+        :return: GlobalHotKeys object ready to be started
         """
 
         def export_replay():
@@ -79,39 +89,39 @@ class Controller:
         def export_screenshot():
             self.export_screenshot()
 
-        global_hotkeys = keyboard.GlobalHotKeys(
+        global_hotkeys = GlobalHotKeys(
             {self.config["video_hotkey"]: export_replay,
              self.config["screen_hotkey"]: export_screenshot})
         global_hotkeys.daemon = True
         return global_hotkeys
 
-    def _make_tray(self) -> SysTrayIcon:
+    def create_tray(self) -> SysTrayIcon:
         """
         :return: SysTrayIcon object ready to be started
         """
 
-        def show_gui(tray):
+        def show_gui(_):
             self._show_gui()
 
-        def start_capture(tray):
+        def start_capture(_):
             self.start_capture()
 
-        def export_replay(tray):
+        def export_replay(_):
             self.export_replay()
 
-        def stop_capture(tray):
+        def stop_capture(_):
             self.stop_capture()
 
-        def close_app(tray):
-            self.close_app()
+        def close_app(_):
+            if not self.closed:
+                self.close_app()
 
-        menu_options = (("Options", None, show_gui),
-                        ("Start recording", None, start_capture),
-                        ("Get recording", None, export_replay),
-                        ("Stop recording", None, stop_capture))
+        menu_options = (("Options", values.OPTIONS_ICON, show_gui),
+                        ("Start recording", values.VIDEO_ICON, start_capture),
+                        ("Get recording", values.CAPTURE_ICON, export_replay),
+                        ("Stop recording", values.STOP_REC_ICON, stop_capture))
 
-        return SysTrayIcon(os.path.join(".", "icons", "application_icon.png"),
-                           "Application icon", menu_options, on_quit=close_app)
+        return SysTrayIcon(values.APP_ICON, values.APP_NAME, menu_options, on_quit=close_app)
 
     def _show_gui(self):
         """
@@ -126,18 +136,18 @@ class Controller:
         Get model with a correct video encoder (according to the extension used)
         """
         try:
-            capture.VID_ENCODERS[self.config['codec']]
+            VID_ENCODERS[self.config['codec']]
         except KeyError:
             self.config['codec'] = 'mp4'
         finally:
-            vid_encoder = capture.VID_ENCODERS[self.config['codec']]
+            vid_encoder = VID_ENCODERS[self.config['codec']]
 
         try:
-            capture.P_ENCODERS[self.config['p_ext']]
+            P_ENCODERS[self.config['p_ext']]
         except KeyError:
             self.config['p_ext'] = 'png'
         finally:
-            p_encoder = capture.P_ENCODERS[self.config['p_ext']]
+            p_encoder = P_ENCODERS[self.config['p_ext']]
 
         vid_path = self.config['video_path']
         vid_pref = "video"
@@ -145,11 +155,11 @@ class Controller:
         p_path = self.config['screen_path']
         p_pref = "screenshot"
         p_ext = self.config['p_ext']
-        return capture.Capture.from_config(
+        return Capture.from_config(
             self.config,
-            vid_encoder(self.config['fps'], capture.FileSaver(vid_path, vid_pref, vid_ext)),
-            p_encoder(capture.FileSaver(p_path, p_pref, p_ext)),
-            verbose=True)
+            vid_encoder(self.config['fps'], FileSaver(vid_path, vid_pref, vid_ext)),
+            p_encoder(FileSaver(p_path, p_pref, p_ext)),
+            verbose=self.verbose)
 
     def _set_config_options(self):
         """
@@ -165,13 +175,53 @@ class Controller:
     def _setup_services(self):
         self.model = self._make_model()
 
-        if self.tray is None:
-            self.tray = self._make_tray()
-            self.tray.start()
-
         self.hotkeys = self._make_hotkeys()
         self.hotkeys.start()
 
+    def _show_config(self, config=None):
+        """
+        Display values from configuration into view. If None, use configuration stored in class
+        :param config: configuration to view
+        """
+        if config is None:
+            config = self.config
+        d_conf = get_config_options()
+
+        # Set indices
+        resolution_index = d_conf['resolution'].index(config['resolution'])
+        fps_index = d_conf['fps'].index(config['fps'])
+        codec_index = d_conf['codec'].index(config['codec'])
+        p_ext_index = d_conf['p_ext'].index(config['p_ext'])
+        display_index = d_conf['display'].index(config['display'])
+
+        self.view.resolution_combo_box.setCurrentIndex(resolution_index)
+        self.view.FPS_combo_box.setCurrentIndex(fps_index)
+        self.view.extension_combo_box.setCurrentIndex(codec_index)
+        self.view.photo_extension_combo_box.setCurrentIndex(p_ext_index)
+        self.view.display_combo_box.setCurrentIndex(display_index)
+
+        # Set values in view
+        self.view.video_hotkey.setText(config['video_hotkey'])
+        self.view.screen_hotkey.setText(config['screen_hotkey'])
+        self.view.quality_slider.setValue(config['quality'])
+        self.view.duration_horizontal_slider.setValue(config['duration'])
+        self.view.v_storage_line.setText(config['video_path'])
+        self.view.s_storage_line.setText(config['screen_path'])
+
+        self.view.ram_display.display(self._get_ram_usage())
+
+    def _get_ram_usage(self):
+        """
+        Based on settings chosen calculate the RAM usage
+        """
+        # todo calculate ram usage based on config currently used
+        return 400
+
+    def _stop_services(self):
+        self.stop_capture()
+        self.hotkeys.stop()
+
+    @pyqtSlot()
     def update_config_from_gui(self):
         """
         Save configuration present in view into a file.
@@ -197,7 +247,7 @@ class Controller:
         self.config['screen_path'] = self.view.s_storage_line.text()
 
         # Save config to file
-        _save_config(self.config, values.CONFIG_FILE_NAME)
+        save_config(self.config, values.CONFIG_FILE_NAME)
 
         # Restart all services with the new configuration
         self._setup_services()
@@ -206,74 +256,45 @@ class Controller:
         if was_recording:
             self.start_capture()
 
-    def _show_config(self, config=None):
-        """
-        Display values from configuration into view. If None, use configuration stored in class
-        :param config: configuration to view
-        """
-        if config is None:
-            config = self.config
-        d_conf = get_config_options()
-
-        # Set indices
-        resolution_index = d_conf['resolution'].index(config['resolution'])
-        fps_index = d_conf['fps'].index(config['fps'])
-        codec_index = d_conf['codec'].index(config['codec'])
-        p_ext_index = d_conf['p_ext'].index(config['p_ext'])
-        display_index = d_conf['display'].index(config['display'])
-        self.view.resolution_combo_box.setCurrentIndex(resolution_index)
-        self.view.FPS_combo_box.setCurrentIndex(fps_index)
-        self.view.extension_combo_box.setCurrentIndex(codec_index)
-        self.view.photo_extension_combo_box.setCurrentIndex(p_ext_index)
-        self.view.display_combo_box.setCurrentIndex(display_index)
-
-        # Set values in view
-        self.view.video_hotkey.setText(config['video_hotkey'])
-        self.view.screen_hotkey.setText(config['screen_hotkey'])
-        self.view.quality_slider.setValue(config['quality'])
-        self.view.duration_horizontal_slider.setValue(config['duration'])
-        self.view.v_storage_line.setText(config['video_path'])
-        self.view.s_storage_line.setText(config['screen_path'])
-
-    def set_default_config(self):
+    @pyqtSlot()
+    def show_default_config(self):
         """
         Display default configuration in view
         """
         self._show_config(get_default_config())
 
-    def get_ram_usage(self):
-        """
-        Based on settings chosen calculate the RAM usage
-        """
-        # todo calculate ram usage based on config currently used
-        return 400
-
+    @pyqtSlot()
     def start_capture(self):
         if self.model:
             self.model.start_recording()
 
+    @pyqtSlot()
     def export_replay(self):
-        print("Replay")
+        if self.verbose:
+            print("[Controller] Replay")
         if self.model:
             self.model.export_recording()
 
+    @pyqtSlot()
     def export_screenshot(self):
-        print("Screenshot")
+        if self.verbose:
+            print("[Controller] Screenshot")
         if self.model:
             self.model.export_screenshot()
 
+    @pyqtSlot()
     def stop_capture(self):
         if self.model:
             self.model.stop_recording()
 
-    def _stop_services(self):
-        self.stop_capture()
-        self.hotkeys.stop()
-
+    @pyqtSlot()
     def close_app(self):
         """
         Stop all processes and close the app
         """
+        if self.verbose:
+            print("[Controller] Closing the app...")
         self._stop_services()
         self.view.should_close = True
         self.view.close()
+        self.closed = True

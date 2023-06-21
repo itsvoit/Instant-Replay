@@ -2,9 +2,14 @@ import os
 
 import keyboard
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import Qt, QEvent
-from PyQt5.QtGui import QIcon, QTextOption, QKeySequence
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QApplication
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import  QTextOption
+
+from PyQt5.QtCore import pyqtSlot
+from PyQt5.QtGui import QIcon
+from PyQt5.QtWidgets import QMainWindow, QFileDialog
+
+from shotting_app import values
 
 widget_back_ground = "background-color: #505F72"
 menu_button_style = '''
@@ -23,29 +28,30 @@ menu_button_style = '''
 
 class UiMainWindow(QMainWindow):
 
-    def __init__(self, controller):
+    def __init__(self, verbose=False):
         super().__init__()
+        self.verbose = verbose
         self.should_close = False
-        self.setWindowIcon(QIcon("./icons/application_icon.png"))
-        self.setObjectName("Screen Recorder")
+
+        self.setWindowIcon(QIcon(values.APP_ICON))
+        self.setObjectName(values.APP_NAME)
         self.resize(875, 612)
         self.setMinimumSize(QtCore.QSize(875, 612))
         self.setMaximumSize(QtCore.QSize(875, 612))
 
-        self.controller = controller
         self.central_widget = self.make_central_widget()
         self.full_menu_widget = self.make_menu_widget()
         self.menu_vertical_layout = self.make_menu_layout()
         self.option_v_layout = self.make_vertical_layout("verticalLayout_4", self.full_menu_widget)
 
-        self.option_button = self.make_menu_button("option_button", "./icons/options_icon.png")
-        self.video_button = self.make_menu_button("video_button", "./icons/video_icon.png")
-        self.editor_button = self.make_menu_button("editor_button", "./icons/editor_icon.png")
+        self.option_button = self.make_menu_button("option_button", values.OPTIONS_ICON)
+        self.video_button = self.make_menu_button("video_button", values.VIDEO_ICON)
+        self.editor_button = self.make_menu_button("editor_button", values.EDITOR_ICON)
         spacerItem = QtWidgets.QSpacerItem(20, 130)
-        self.start_button = self.make_menu_button("start_button", "./icons/start_recording_icon.png")
-        self.capture_button = self.make_menu_button("capture_button", os.path.join(".", "icons/capture_icon.png"))
-        self.screenshot_button = self.make_menu_button("screenshot_button", os.path.join(".", "icons/capture_icon.png"))
-        self.stop_button = self.make_menu_button("stop_button", "./icons/stop_recording_icon.png")
+        self.start_button = self.make_menu_button("start_button", values.START_REC_ICON)
+        self.capture_button = self.make_menu_button("capture_button", values.CAPTURE_ICON)
+        self.screenshot_button = self.make_menu_button("screenshot_button", values.CAPTURE_ICON)
+        self.stop_button = self.make_menu_button("stop_button", values.STOP_REC_ICON)
         spacerItem2 = QtWidgets.QSpacerItem(20, 220, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
 
         self.menu_vertical_layout.addWidget(self.option_button)
@@ -61,14 +67,9 @@ class UiMainWindow(QMainWindow):
         self.option_v_layout.addLayout(self.menu_vertical_layout)
 
         self.option_button.clicked.connect(self.select_option_widget)
-        self.start_button.clicked.connect(self.start_capturing)
-        self.capture_button.clicked.connect(self.capture_video)
-        self.screenshot_button.clicked.connect(self.capture_screenshot)
-        self.stop_button.clicked.connect(self.stop_capturing)
 
-        self.exit_button = self.make_menu_button("exit_button", "./icons/exit_icon.png")
+        self.exit_button = self.make_menu_button("exit_button", values.EXIT_ICON)
 
-        self.exit_button.clicked.connect(self.close_button_action)
         self.option_v_layout.addWidget(self.exit_button)
 
         self.main_widget = self.make_main_widget()
@@ -85,12 +86,12 @@ class UiMainWindow(QMainWindow):
         self.quality_slider = self.make_slider("quality_slider", (270, 330), 1, 95)
 
         self.v_storage_line = self.make_storage_line("v_storage_line", (270, 430))
-        self.v_storage_line.setDisabled(True)
+        self.v_storage_line.setReadOnly(True)
 
         self.s_storage_line = self.make_storage_line('s_storage_line', (270, 480))
 
         self.display_combo_box = self.make_combo_box('display_combo_box', (270, 530))
-        self.s_storage_line.setDisabled(True)
+        self.s_storage_line.setReadOnly(True)
 
         self.layout_widget_labels = self.make_layout_widget_for_label()
 
@@ -139,10 +140,8 @@ class UiMainWindow(QMainWindow):
         self.duration_display = self.make_lcd_display("duration_display", (470, 330), 91, 32)
 
         self.reset_button = self.make_button("reset_button", (470, 570))
-        self.reset_button.clicked.connect(self.restart_settings)
 
         self.save_button = self.make_button("save_button", (590, 570))
-        self.save_button.clicked.connect(self.save_settings)
 
         self.duration_horizontal_slider = self.make_horizontal_slider("duration_slider", (270, 380), 10, 120)
 
@@ -368,31 +367,31 @@ class UiMainWindow(QMainWindow):
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("Screen Recorder", "Screen Recorder"))
-        self.option_button.setText(_translate("Screen Recorder", "  Option"))
-        self.video_button.setText(_translate("Screen Recorder", "  Replay"))
-        self.editor_button.setText(_translate("Screen Recorder", "  Video editor"))
-        self.start_button.setText(_translate("Screen Recorder", "  Start"))
-        self.capture_button.setText(_translate("Screen Recorder", "  Replay"))
-        self.screenshot_button.setText(_translate("Screen Recorder", "  Screenshot"))
-        self.stop_button.setText(_translate("Screen Recorder", "  Stop"))
-        self.exit_button.setText(_translate("Screen Recorder", "  Exit"))
-        self.resolution_label.setText(_translate("Screen Recorder", "Resolution"))
-        self.FPS_label.setText(_translate("Screen Recorder", "FPS"))
-        self.extension_label.setText(_translate("Screen Recorder", "Replay extension"))
-        self.photo_extension_label.setText(_translate("Screen Recorder", "Screenshot extension"))
-        self.v_hotkey.setText(_translate("Screen Recorder", "Replay Hotkey"))
-        self.s_hotkey.setText(_translate("Screen Recorder", "Screenshot Hotkey"))
-        self.quality_label.setText(_translate("Screen Recorder", "Bitrate/Quality"))
-        self.duration_label.setText(_translate("Screen Recorder", "Replay duration (s)"))
-        self.v_storage_label.setText(_translate("Screen Recorder", "Replay storage path"))
-        self.s_storage_label.setText(_translate("Screen Recorder", "Screenshot storage path"))
-        self.display_label.setText(_translate("Screen Recorder", "Display"))
-        self.v_storage_browse.setText(_translate("Screen Recorder", "Browse"))
-        self.s_storage_browse.setText(_translate("Screen Recorder", "Browse"))
-        self.reset_button.setText(_translate("Screen Recorder", "Reset"))
-        self.save_button.setText(_translate("Screen Recorder", "Save"))
-        self.ram_label.setText(_translate("Screen Recorder", "RAM requirements (MB)"))
+        self.setWindowTitle(_translate(values.APP_NAME, values.APP_NAME))
+        self.option_button.setText(_translate(values.APP_NAME, "  Option"))
+        self.video_button.setText(_translate(values.APP_NAME, "  Replay"))
+        self.editor_button.setText(_translate(values.APP_NAME, "  Video editor"))
+        self.start_button.setText(_translate(values.APP_NAME, "  Start"))
+        self.capture_button.setText(_translate(values.APP_NAME, "  Replay"))
+        self.screenshot_button.setText(_translate(values.APP_NAME, "  Screenshot"))
+        self.stop_button.setText(_translate(values.APP_NAME, "  Stop"))
+        self.exit_button.setText(_translate(values.APP_NAME, "  Exit"))
+        self.resolution_label.setText(_translate(values.APP_NAME, "Resolution"))
+        self.FPS_label.setText(_translate(values.APP_NAME, "FPS"))
+        self.extension_label.setText(_translate(values.APP_NAME, "Replay extension"))
+        self.photo_extension_label.setText(_translate(values.APP_NAME, "Screenshot extension"))
+        self.v_hotkey.setText(_translate(values.APP_NAME, "Replay Hotkey"))
+        self.s_hotkey.setText(_translate(values.APP_NAME, "Screenshot Hotkey"))
+        self.quality_label.setText(_translate(values.APP_NAME, "Bitrate/Quality"))
+        self.duration_label.setText(_translate(values.APP_NAME, "Replay duration (s)"))
+        self.v_storage_label.setText(_translate(values.APP_NAME, "Replay storage path"))
+        self.s_storage_label.setText(_translate(values.APP_NAME, "Screenshot storage path"))
+        self.display_label.setText(_translate(values.APP_NAME, "Display"))
+        self.v_storage_browse.setText(_translate(values.APP_NAME, "Browse"))
+        self.s_storage_browse.setText(_translate(values.APP_NAME, "Browse"))
+        self.reset_button.setText(_translate(values.APP_NAME, "Reset"))
+        self.save_button.setText(_translate(values.APP_NAME, "Save"))
+        self.ram_label.setText(_translate(values.APP_NAME, "RAM requirements (MB)"))
 
     # ---------------------------------------------------------------------------------
     # Override events
@@ -401,6 +400,8 @@ class UiMainWindow(QMainWindow):
         if not self.should_close:
             event.ignore()
             self.hide()
+        elif self.verbose:
+            print("[GUI] Close event")
 
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.WindowStateChange:
@@ -411,56 +412,16 @@ class UiMainWindow(QMainWindow):
     # ---------------------------------------------------------------------------------
     # Event methods
 
-    def start_capturing(self):
-        self.controller.start_capture()
-
-    def stop_capturing(self):
-        self.controller.stop_capture()
-
-    def capture_video(self):
-        self.controller.export_replay()
-
-    def capture_screenshot(self):
-        self.controller.export_screenshot()
-
-    def close_button_action(self):
-        self.hide()
-
     def select_option_widget(self):
         self.main_stacked_widget.setCurrentIndex(0)
 
-    def show_settings(self, settings):
-        self.resolution_combo_box.clear()
-        self.FPS_combo_box.clear()
-        self.extension_combo_box.clear()
-        self.photo_extension_combo_box.clear()
-        self.display_combo_box.clear()
-
-        self.resolution_combo_box.addItems(settings['resolution'])
-        self.FPS_combo_box.addItems(settings['fps'])
-        self.extension_combo_box.addItems(settings['codec'])
-        self.photo_extension_combo_box.addItems(settings['p_ext'])
-        self.display_combo_box.addItems(settings['display'])
-
-        self.resolution_combo_box.setCurrentIndex(0)
-        self.FPS_combo_box.setCurrentIndex(0)
-        self.extension_combo_box.setCurrentIndex(0)
-        self.photo_extension_combo_box.setCurrentIndex(0)
-        self.display_combo_box.setCurrentIndex(0)
-
-        self.ram_display.display(self.controller.get_ram_usage())
-
-    def restart_settings(self):
-        self.controller.set_default_config()
-
-    def save_settings(self):
-        self.controller.update_config_from_gui()
-
+    @pyqtSlot()
     def browse_v_storage(self):
         folder = QFileDialog.getExistingDirectory(QMainWindow(), "Wybierz folder")
         if folder:
             self.v_storage_line.setText(folder)
 
+    @pyqtSlot()
     def browse_s_storage(self):
         folder = QFileDialog.getExistingDirectory(QMainWindow(), "Wybierz folder")
         if folder:
