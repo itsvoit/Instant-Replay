@@ -1,12 +1,14 @@
 
 CONFIG_FILE_NAME = "config.json"
 CAPTURE_JPEG = "JPEG"
+CAPTURE_PNG = "PNG"
 
 
 DEFAULT_START_CAP = False
 DEFAULT_RESOLUTION = '1920x1080'
 DEFAULT_FPS = 15
 DEFAULT_CODEC = "mp4"
+DEFAULT_P_EXT = "png"
 DEFAULT_DISPLAY = 1  # Main display
 DEFAULT_V_HOTKEY = "<ctrl>+<shift>+p"
 DEFAULT_P_HOTKEY = "<ctrl>+<shift>+o"
@@ -23,6 +25,7 @@ DEFAULT_CONFIG = {
                   'resolution': DEFAULT_RESOLUTION,
                   'fps': DEFAULT_FPS,
                   'codec': DEFAULT_CODEC,
+                  'p_ext': DEFAULT_P_EXT,
                   'display': DEFAULT_DISPLAY,
                   'video_hotkey': DEFAULT_V_HOTKEY,
                   'screen_hotkey': DEFAULT_P_HOTKEY,
@@ -40,7 +43,8 @@ ALL_CONFIG_VALUES = {
                 'resolution': ['1920x1080'],
                 'fps': [10, 15, 20, 25, 30],
                 'codec': ['mp4'],
-                'display': [1, 2],
+                'p_ext': ["png", "jpeg"],
+                'display': [1, 2],  # todo recognise how many displays on load
 }
 
 
@@ -48,4 +52,5 @@ DEFAULT_SCREEN_SIZE = (1920, 1080)
 
 TASK_KILL = "KILL"
 TASK_TRIM = "TRIM"
+TASK_SHOT = "SHOT"
 

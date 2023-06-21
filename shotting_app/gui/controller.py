@@ -2,7 +2,6 @@ import json
 import os
 import sys
 from copy import copy
-from pprint import pprint
 
 from PyQt5 import QtCore
 from PyQt5.QtWidgets import QApplication
@@ -73,6 +72,7 @@ class Controller:
         GlobalHotKeys object will use current hotkeys
         :return: keyboard.GlobalHotKeys object ready to be started
         """
+
         def export_replay():
             self.export_replay()
 
@@ -89,6 +89,7 @@ class Controller:
         """
         :return: SysTrayIcon object ready to be started
         """
+
         def show_gui(tray):
             self._show_gui()
 
@@ -125,12 +126,31 @@ class Controller:
         Get model with a correct video encoder (according to the extension used)
         """
         try:
-            capture.ENCODERS[self.config['codec']]
+            capture.VID_ENCODERS[self.config['codec']]
         except KeyError:
             self.config['codec'] = 'mp4'
         finally:
-            encoder = capture.ENCODERS[self.config['codec']]
-        return capture.Capture.from_config(self.config, encoder(self.config['fps']))
+            vid_encoder = capture.VID_ENCODERS[self.config['codec']]
+
+        try:
+            capture.P_ENCODERS[self.config['p_ext']]
+        except KeyError:
+            self.config['p_ext'] = 'png'
+        finally:
+            p_encoder = capture.P_ENCODERS[self.config['p_ext']]
+
+        vid_path = self.config['video_path']
+        vid_pref = "video"
+        vid_ext = self.config['codec']
+        p_path = self.config['screen_path']
+        p_pref = "screenshot"
+        p_ext = self.config['p_ext']
+        return capture.Capture.from_config(
+            self.config,
+            vid_encoder(self.config['fps'], capture.FileSaver(vid_path, vid_pref, vid_ext)),
+            p_encoder(capture.FileSaver(p_path, p_pref, p_ext)),
+            verbose=True)
+
 
     def _set_config_options(self):
         """
@@ -233,13 +253,13 @@ class Controller:
 
     def export_replay(self):
         print("Replay")
-        # if self.model:  #todo uncomment
-        #     self.model.export_recording()
+        if self.model:
+            self.model.export_recording()
 
     def export_screenshot(self):
         print("Screenshot")
-        # if self.model:  #todo uncomment
-        #     self.model.export_screenshot()
+        if self.model:
+            self.model.export_screenshot()
 
     def stop_capture(self):
         if self.model:
