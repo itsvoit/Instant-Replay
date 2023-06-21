@@ -41,9 +41,7 @@ class UiMainWindow(QMainWindow):
         self.editor_button = self.make_menu_button("editor_button", "./icons/editor_icon.png")
         spacerItem = QtWidgets.QSpacerItem(20, 150)
         self.start_button = self.make_menu_button("start_button", "./icons/start_recording_icon.png")
-        # todo rename icon to something humanly readable
-        self.capture_button = self.make_menu_button("capture_button",
-                                                    os.path.join(".", "icons/frame-expand_icon-icons.com_48296.png"))
+        self.capture_button = self.make_menu_button("capture_button", os.path.join(".", "icons/capture_icon.png"))
         self.stop_button = self.make_menu_button("stop_button", "./icons/stop_recording_icon.png")
         spacerItem2 = QtWidgets.QSpacerItem(20, 220, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
 
@@ -63,7 +61,7 @@ class UiMainWindow(QMainWindow):
         self.capture_button.clicked.connect(self.capture_video)
         self.stop_button.clicked.connect(self.stop_capturing)
 
-        self.exit_button = self.make_menu_button("exit_button", "./icons/powercircleandlinesymbol_118369.png")
+        self.exit_button = self.make_menu_button("exit_button", "./icons/exit_icon.png")
 
         self.exit_button.clicked.connect(self.close_button_action)
         self.option_v_layout.addWidget(self.exit_button)

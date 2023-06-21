@@ -320,10 +320,11 @@ class Capture:
 
     def _make_processes(self):
         self.rec_process = RecorderProcess(self.img_queue, self.rec_conn2, self.shot_conn2, copy(self.interval),
-                                           copy(self.display))
+                                           copy(self.display), verbose=self.verbose)
         self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames, self.trim_send, copy(self.length),
-                                           copy(self.fps), copy(self.format_), copy(self.quality))
-        self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps))
+                                           copy(self.fps), copy(self.format_), copy(self.quality), verbose=self.verbose)
+        self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps),
+                                        verbose=self.verbose)
 
     def start_recording(self):
         # todo wait for processes to start and return True
@@ -342,7 +343,7 @@ class Capture:
     def stop_recording(self):
         if not self.rec_process.is_alive():
             if self.verbose:
-                print("[Capture] Process is unalived")
+                print("[Capture] Processes haven't started")
             return False
 
         if self.verbose:
@@ -352,6 +353,9 @@ class Capture:
         self.rec_process.join()
         self.conv_process.join()
         self.trim_process.join()
+
+        if self.verbose:
+            print("[Capture] Processes joined")
 
         self.is_recording = False
 
