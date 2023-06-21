@@ -8,10 +8,14 @@ widget_back_ground = "background-color: #505F72"
 menu_button_style = '''
                     QPushButton{
                         background-color: #455364;
+                        text-align: left; 
+                        padding-left: 10px; 
                     }
 
                     QPushButton:hover{
                         background-color: #5F7289;
+                        text-align: left; 
+                        padding-left: 10px;                        
                     }'''
 
 
@@ -46,14 +50,13 @@ class UiMainWindow(QMainWindow):
 
         self.menu_vertical_layout.addWidget(self.editor_button)
 
-        spacerItem = QtWidgets.QSpacerItem(20, 60)
+        spacerItem = QtWidgets.QSpacerItem(20, 150)
         self.menu_vertical_layout.addItem(spacerItem)
 
         self.start_button = self.make_menu_button("start_button",
                                                   "./icons/active_audio_start_player_button_music_play_icon_219332.png")
         self.start_button.clicked.connect(self.start_capturing)
         self.menu_vertical_layout.addWidget(self.start_button)
-        # self.menu_vertica_layout.addWidget(QtWidgets.QLabel())
 
         self.capture_button = self.make_menu_button("capture_button",
                                                     os.path.join(".", "icons/frame-expand_icon-icons.com_48296.png"))
@@ -64,7 +67,7 @@ class UiMainWindow(QMainWindow):
         self.stop_button.clicked.connect(self.stop_capturing)
         self.menu_vertical_layout.addWidget(self.stop_button)
 
-        spacerItem = QtWidgets.QSpacerItem(20, 250, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
+        spacerItem = QtWidgets.QSpacerItem(20, 220, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
         self.menu_vertical_layout.addItem(spacerItem)
 
         self.option_v_layout.addLayout(self.menu_vertical_layout)
@@ -229,7 +232,7 @@ class UiMainWindow(QMainWindow):
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(icon_path), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         button.setIcon(icon)
-        button.setIconSize(QtCore.QSize(20, 50))
+        button.setIconSize(QtCore.QSize(25, 30))
         button.setCheckable(True)
         button.setAutoExclusive(True)
         button.setObjectName(name)
@@ -418,13 +421,13 @@ class UiMainWindow(QMainWindow):
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Screen Recorder", "Screen Recorder"))
-        self.option_button.setText(_translate("Screen Recorder", "Option"))
-        self.video_button.setText(_translate("Screen Recorder", "Video"))
-        self.editor_button.setText(_translate("Screen Recorder", "Video editor"))
-        self.start_button.setText(_translate("Screen Recorder", "Start"))
-        self.capture_button.setText(_translate("Screen Recorder", "Capture"))
-        self.stop_button.setText(_translate("Screen Recorder", "Stop"))
-        self.exit_button.setText(_translate("Screen Recorder", "Exit"))
+        self.option_button.setText(_translate("Screen Recorder", "  Option"))
+        self.video_button.setText(_translate("Screen Recorder", "  Video"))
+        self.editor_button.setText(_translate("Screen Recorder", "  Video editor"))
+        self.start_button.setText(_translate("Screen Recorder", "  Start"))
+        self.capture_button.setText(_translate("Screen Recorder", "  Capture"))
+        self.stop_button.setText(_translate("Screen Recorder", "  Stop"))
+        self.exit_button.setText(_translate("Screen Recorder", "  Exit"))
         self.resolution_label.setText(_translate("Screen Recorder", "Resolution"))
         self.FPS_label.setText(_translate("Screen Recorder", "FPS"))
         self.extension_label.setText(_translate("Screen Recorder", "Extension"))
