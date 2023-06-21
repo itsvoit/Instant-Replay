@@ -369,7 +369,7 @@ class UiMainWindow(QMainWindow):
         self.quality_label.setText(_translate(values.APP_NAME, "Bitrate/Quality"))
         self.duration_label.setText(_translate(values.APP_NAME, "Replay duration (s)"))
         self.v_storage_label.setText(_translate(values.APP_NAME, "Replay storage path"))
-        self.s_storage_label.setText(_translate(values.APP_NAME, "Screenshot storage path"))
+        self.s_storage_label.setText(_translate(values.APP_NAME, "Photo storage path"))
         self.display_label.setText(_translate(values.APP_NAME, "Display"))
         self.v_storage_browse.setText(_translate(values.APP_NAME, "Browse"))
         self.s_storage_browse.setText(_translate(values.APP_NAME, "Browse"))
