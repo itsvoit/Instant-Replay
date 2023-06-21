@@ -133,8 +133,7 @@ class RecorderProcess(multiprocessing.Process):
             print("[Capture/Record] Recording process running...")
         # recorder = dxcam.create(output_color="BGR")
         # recorder.start(target_fps=60, video_mode=True)
-        with dxcam.create(max_buffer_len=7200, output_color="BGR") as sct:
-            sct.start(target_fps=60, video_mode=True)
+        with mss.mss() as sct:
             mon = sct.monitors[self.display]
             self.task.send(mon)
             previous_shot = time.perf_counter_ns()
@@ -249,6 +248,7 @@ class Capture:
         self.buffered_frames = self.manager.list()
 
         # Multiprocessing communication
+        self.is_recording = False
         self.img_queue = Queue()
         self.rec_conn2, self.rec_conn1 = Pipe(duplex=True)
         self.trim_recv, self.trim_send = Pipe(duplex=False)
@@ -282,17 +282,20 @@ class Capture:
             self.rec_process.verbose = True
             self.conv_process.verbose = True
             self.trim_process.verbose = True
+
+        self.is_recording = True
         # Run all the processes
         self.rec_process.start()
         self.conv_process.start()
         self.trim_process.start()
+        return True
 
     def stop_recording(self):
         # todo wait for processes to finish and return True
         if not self.rec_process.is_alive():
             if self.verbose:
                 print("[Capture] Process is unalived")
-            return
+            return False
 
         if self.verbose:
             print("[Capture] Killing processes...")
@@ -301,6 +304,8 @@ class Capture:
         self.rec_process.join()
         self.conv_process.join()
         self.trim_process.join()
+
+        self.is_recording = False
 
         # Set-up for next recording
         self.img_queue = Queue()
@@ -312,7 +317,11 @@ class Capture:
                                            copy(self.length), copy(self.fps), copy(self.format_), copy(self.quality))
         self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps))
 
-    def get_recording(self):
+        return True
+
+    def export_recording(self):
+        if not self.is_recording:
+            return False
         if self.rec_conn1.poll():
             self.mon = self.rec_conn1.recv()
 
@@ -324,8 +333,9 @@ class Capture:
             print(f"[Capture] Exporting {len(frames)} frames")
 
         self.video_encoder.encode(frames, screen_size)
+        return True
 
-    def get_screenshot(self):
+    def export_screenshot(self):
         return self.buffered_frames[-1]
 
     def get_video_encoder(self):
