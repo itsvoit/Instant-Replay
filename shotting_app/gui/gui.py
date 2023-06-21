@@ -1,8 +1,10 @@
 import os
 
+import keyboard
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import QMainWindow, QFileDialog
+from PyQt5.QtCore import Qt, QEvent
+from PyQt5.QtGui import QIcon, QTextOption, QKeySequence
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QApplication
 
 widget_back_ground = "background-color: #505F72"
 menu_button_style = '''
@@ -147,8 +149,10 @@ class UiMainWindow(QMainWindow):
         self.v_dur_display = self.make_lcd_display("v_dur_display", (470, 380), 91, 32)
 
         self.video_hotkey = self.make_line("video_path", (270, 230))
+        self.video_hotkey.keyPressEvent = self.line_press_event
 
         self.screen_hotkey = self.make_line("screen_path", (270, 280))
+        self.screen_hotkey.keyPressEvent = self.line_press_event
 
         self.ram_label = self.make_label("ram_req_label", self.option)
         self.ram_label.setGeometry(QtCore.QRect(480, 60, 201, 41))
@@ -176,6 +180,22 @@ class UiMainWindow(QMainWindow):
 
         self.duration_horizontal_slider.valueChanged['int'].connect(self.v_dur_display.display)
         QtCore.QMetaObject.connectSlotsByName(self)
+
+    def line_press_event(self, event):
+        modifiers = ['alt', 'shift', 'ctrl']
+        key1 = None
+
+        for modifier in modifiers:
+            if keyboard.is_pressed(modifier):
+                key1 = modifier
+        key2 = keyboard.read_key()
+
+        line_text = self.video_hotkey if self.video_hotkey.hasFocus() else self.screen_hotkey
+
+        if key2 and key1 and key1 != key2:
+            line_text.setText(f"{key1}+{key2}")
+
+        line_text.clearFocus()
 
     def make_central_widget(self):
         central_widget = QtWidgets.QWidget(self)
@@ -334,14 +354,17 @@ class UiMainWindow(QMainWindow):
         return horizontal_slider
 
     def make_line(self, name, geometry):
-        path = QtWidgets.QLineEdit(self.option)
-        path.setGeometry(QtCore.QRect(geometry[0], geometry[1], 182, 32))
+        textOption = QTextOption()
+        textOption.setFlags(textOption.flags() & ~Qt.TextEditable)
+        textOption.setWrapMode(QTextOption.WrapAtWordBoundaryOrAnywhere)
+        text_line = QtWidgets.QLineEdit(self.option)
+        text_line.setGeometry(QtCore.QRect(geometry[0], geometry[1], 182, 32))
         font = QtGui.QFont()
         font.setPointSize(11)
-        path.setFont(font)
-        path.setObjectName(name)
+        text_line.setFont(font)
+        text_line.setObjectName(name)
 
-        return path
+        return text_line
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate

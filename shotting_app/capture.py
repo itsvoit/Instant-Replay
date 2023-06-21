@@ -23,7 +23,9 @@ class Frame:
         self.size = sct_img.size
         self.format_ = format_
 
-        img = Image.frombytes("RGB", self.size, sct_img.bgra, "raw", "BGRX")
+        img = Image.frombytes("RGB", self.size, sct_img.bgra, "raw", "BGRX") if hasattr(sct_img, "bgra")  \
+            else Image.frombytes("RGB", self.size, sct_img, "raw", "BGRX")
+
         img.save(self.buffered_img, format=format_, quality=quality)
 
     def to_file(self, path_):
