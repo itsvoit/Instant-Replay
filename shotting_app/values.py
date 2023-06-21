@@ -1,3 +1,4 @@
+APP_NAME = "Instant Replay"
 
 CONFIG_FILE_NAME = "config.json"
 CAPTURE_JPEG = "JPEG"
@@ -53,4 +54,13 @@ DEFAULT_SCREEN_SIZE = (1920, 1080)
 TASK_KILL = "KILL"
 TASK_TRIM = "TRIM"
 TASK_SHOT = "SHOT"
+
+APP_ICON = "icons/application_icon.png"
+CAPTURE_ICON = "icons/capture_icon.png"
+EDITOR_ICON = "icons/editor_icon.png"
+EXIT_ICON = "icons/exit_icon.png"
+OPTIONS_ICON = "icons/options_icon.png"
+START_REC_ICON = "icons/start_recording_icon.png"
+STOP_REC_ICON = "icons/stop_recording_icon.png"
+VIDEO_ICON = "icons/video_icon.png"
 

@@ -116,13 +116,12 @@ class Controller(QObject):
             if not self.closed:
                 self.close_app()
 
-        menu_options = (("Options", None, show_gui),
-                        ("Start recording", None, start_capture),
-                        ("Get recording", None, export_replay),
-                        ("Stop recording", None, stop_capture))
+        menu_options = (("Options", values.OPTIONS_ICON, show_gui),
+                        ("Start recording", values.VIDEO_ICON, start_capture),
+                        ("Get recording", values.CAPTURE_ICON, export_replay),
+                        ("Stop recording", values.STOP_REC_ICON, stop_capture))
 
-        return SysTrayIcon(os.path.join(".", "icons", "application_icon.png"),
-                           "Application icon", menu_options, on_quit=close_app)
+        return SysTrayIcon(values.APP_ICON, values.APP_NAME, menu_options, on_quit=close_app)
 
     def _show_gui(self):
         """

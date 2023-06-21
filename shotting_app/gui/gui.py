@@ -5,6 +5,8 @@ from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
 
+from shotting_app import values
+
 widget_back_ground = "background-color: #505F72"
 menu_button_style = '''
                     QPushButton{
@@ -27,8 +29,8 @@ class UiMainWindow(QMainWindow):
         self.verbose = verbose
         self.should_close = False
 
-        self.setWindowIcon(QIcon("./icons/application_icon.png"))
-        self.setObjectName("Screen Recorder")
+        self.setWindowIcon(QIcon(values.APP_ICON))
+        self.setObjectName(values.APP_NAME)
         self.resize(875, 612)
         self.setMinimumSize(QtCore.QSize(875, 612))
         self.setMaximumSize(QtCore.QSize(875, 612))
@@ -38,14 +40,14 @@ class UiMainWindow(QMainWindow):
         self.menu_vertical_layout = self.make_menu_layout()
         self.option_v_layout = self.make_vertical_layout("verticalLayout_4", self.full_menu_widget)
 
-        self.option_button = self.make_menu_button("option_button", "./icons/options_icon.png")
-        self.video_button = self.make_menu_button("video_button", "./icons/video_icon.png")
-        self.editor_button = self.make_menu_button("editor_button", "./icons/editor_icon.png")
+        self.option_button = self.make_menu_button("option_button", values.OPTIONS_ICON)
+        self.video_button = self.make_menu_button("video_button", values.VIDEO_ICON)
+        self.editor_button = self.make_menu_button("editor_button", values.EDITOR_ICON)
         spacerItem = QtWidgets.QSpacerItem(20, 130)
-        self.start_button = self.make_menu_button("start_button", "./icons/start_recording_icon.png")
-        self.capture_button = self.make_menu_button("capture_button", os.path.join(".", "icons/capture_icon.png"))
-        self.screenshot_button = self.make_menu_button("screenshot_button", os.path.join(".", "icons/capture_icon.png"))
-        self.stop_button = self.make_menu_button("stop_button", "./icons/stop_recording_icon.png")
+        self.start_button = self.make_menu_button("start_button", values.START_REC_ICON)
+        self.capture_button = self.make_menu_button("capture_button", values.CAPTURE_ICON)
+        self.screenshot_button = self.make_menu_button("screenshot_button", values.CAPTURE_ICON)
+        self.stop_button = self.make_menu_button("stop_button", values.STOP_REC_ICON)
         spacerItem2 = QtWidgets.QSpacerItem(20, 220, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
 
         self.menu_vertical_layout.addWidget(self.option_button)
@@ -62,7 +64,7 @@ class UiMainWindow(QMainWindow):
 
         self.option_button.clicked.connect(self.select_option_widget)
 
-        self.exit_button = self.make_menu_button("exit_button", "./icons/exit_icon.png")
+        self.exit_button = self.make_menu_button("exit_button", values.EXIT_ICON)
 
         self.option_v_layout.addWidget(self.exit_button)
 
@@ -342,31 +344,31 @@ class UiMainWindow(QMainWindow):
 
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("Screen Recorder", "Screen Recorder"))
-        self.option_button.setText(_translate("Screen Recorder", "  Option"))
-        self.video_button.setText(_translate("Screen Recorder", "  Replay"))
-        self.editor_button.setText(_translate("Screen Recorder", "  Video editor"))
-        self.start_button.setText(_translate("Screen Recorder", "  Start"))
-        self.capture_button.setText(_translate("Screen Recorder", "  Replay"))
-        self.screenshot_button.setText(_translate("Screen Recorder", "  Screenshot"))
-        self.stop_button.setText(_translate("Screen Recorder", "  Stop"))
-        self.exit_button.setText(_translate("Screen Recorder", "  Exit"))
-        self.resolution_label.setText(_translate("Screen Recorder", "Resolution"))
-        self.FPS_label.setText(_translate("Screen Recorder", "FPS"))
-        self.extension_label.setText(_translate("Screen Recorder", "Replay extension"))
-        self.photo_extension_label.setText(_translate("Screen Recorder", "Screenshot extension"))
-        self.v_hotkey.setText(_translate("Screen Recorder", "Replay Hotkey"))
-        self.s_hotkey.setText(_translate("Screen Recorder", "Screenshot Hotkey"))
-        self.quality_label.setText(_translate("Screen Recorder", "Bitrate/Quality"))
-        self.duration_label.setText(_translate("Screen Recorder", "Replay duration (s)"))
-        self.v_storage_label.setText(_translate("Screen Recorder", "Replay storage path"))
-        self.s_storage_label.setText(_translate("Screen Recorder", "Screenshot storage path"))
-        self.display_label.setText(_translate("Screen Recorder", "Display"))
-        self.v_storage_browse.setText(_translate("Screen Recorder", "Browse"))
-        self.s_storage_browse.setText(_translate("Screen Recorder", "Browse"))
-        self.reset_button.setText(_translate("Screen Recorder", "Reset"))
-        self.save_button.setText(_translate("Screen Recorder", "Save"))
-        self.ram_label.setText(_translate("Screen Recorder", "RAM requirements (MB)"))
+        self.setWindowTitle(_translate(values.APP_NAME, values.APP_NAME))
+        self.option_button.setText(_translate(values.APP_NAME, "  Option"))
+        self.video_button.setText(_translate(values.APP_NAME, "  Replay"))
+        self.editor_button.setText(_translate(values.APP_NAME, "  Video editor"))
+        self.start_button.setText(_translate(values.APP_NAME, "  Start"))
+        self.capture_button.setText(_translate(values.APP_NAME, "  Replay"))
+        self.screenshot_button.setText(_translate(values.APP_NAME, "  Screenshot"))
+        self.stop_button.setText(_translate(values.APP_NAME, "  Stop"))
+        self.exit_button.setText(_translate(values.APP_NAME, "  Exit"))
+        self.resolution_label.setText(_translate(values.APP_NAME, "Resolution"))
+        self.FPS_label.setText(_translate(values.APP_NAME, "FPS"))
+        self.extension_label.setText(_translate(values.APP_NAME, "Replay extension"))
+        self.photo_extension_label.setText(_translate(values.APP_NAME, "Screenshot extension"))
+        self.v_hotkey.setText(_translate(values.APP_NAME, "Replay Hotkey"))
+        self.s_hotkey.setText(_translate(values.APP_NAME, "Screenshot Hotkey"))
+        self.quality_label.setText(_translate(values.APP_NAME, "Bitrate/Quality"))
+        self.duration_label.setText(_translate(values.APP_NAME, "Replay duration (s)"))
+        self.v_storage_label.setText(_translate(values.APP_NAME, "Replay storage path"))
+        self.s_storage_label.setText(_translate(values.APP_NAME, "Screenshot storage path"))
+        self.display_label.setText(_translate(values.APP_NAME, "Display"))
+        self.v_storage_browse.setText(_translate(values.APP_NAME, "Browse"))
+        self.s_storage_browse.setText(_translate(values.APP_NAME, "Browse"))
+        self.reset_button.setText(_translate(values.APP_NAME, "Reset"))
+        self.save_button.setText(_translate(values.APP_NAME, "Save"))
+        self.ram_label.setText(_translate(values.APP_NAME, "RAM requirements (MB)"))
 
     # ---------------------------------------------------------------------------------
     # Override events
