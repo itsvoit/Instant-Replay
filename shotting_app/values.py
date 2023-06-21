@@ -18,7 +18,8 @@ DEFAULT_P_PATH = "photos"
 DEFAULT_RAM_USAGE = 500 * 1024 * 1024  # 500 * MB
 DEFAULT_RUN_TRAY = True
 
-DEFAULT_CONFIG = {'start_capture': DEFAULT_START_CAP,
+DEFAULT_CONFIG = {
+                  'start_capture': DEFAULT_START_CAP,
                   'resolution': DEFAULT_RESOLUTION,
                   'fps': DEFAULT_FPS,
                   'codec': DEFAULT_CODEC,
@@ -32,7 +33,16 @@ DEFAULT_CONFIG = {'start_capture': DEFAULT_START_CAP,
                   'screen_path': DEFAULT_P_PATH,
                   'ram_usage': DEFAULT_RAM_USAGE,
                   'tray': True
-                  }
+}
+
+
+ALL_CONFIG_VALUES = {
+                'resolution': ['1920x1080'],
+                'fps': [10, 15, 20, 25, 30],
+                'codec': ['mp4'],
+                'display': [1, 2],
+}
+
 
 DEFAULT_SCREEN_SIZE = (1920, 1080)
 
