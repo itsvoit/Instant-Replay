@@ -46,7 +46,7 @@ class UiMainWindow(QMainWindow):
 
         self.menu_vertical_layout.addWidget(self.editor_button)
 
-        spacerItem = QtWidgets.QSpacerItem(20, 170)
+        spacerItem = QtWidgets.QSpacerItem(20, 60)
         self.menu_vertical_layout.addItem(spacerItem)
 
         self.start_button = self.make_menu_button("start_button",
@@ -180,8 +180,6 @@ class UiMainWindow(QMainWindow):
         self.quality_slider.valueChanged['int'].connect(self.duration_display.display)
 
         self.duration_horizontal_slider.valueChanged['int'].connect(self.v_dur_display.display)
-
-        self.show_user_settings()
         QtCore.QMetaObject.connectSlotsByName(self)
 
     def start_capturing(self):
@@ -424,6 +422,7 @@ class UiMainWindow(QMainWindow):
         self.video_button.setText(_translate("Screen Recorder", "Video"))
         self.editor_button.setText(_translate("Screen Recorder", "Video editor"))
         self.start_button.setText(_translate("Screen Recorder", "Start"))
+        self.capture_button.setText(_translate("Screen Recorder", "Capture"))
         self.stop_button.setText(_translate("Screen Recorder", "Stop"))
         self.exit_button.setText(_translate("Screen Recorder", "Exit"))
         self.resolution_label.setText(_translate("Screen Recorder", "Resolution"))

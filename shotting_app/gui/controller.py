@@ -66,6 +66,10 @@ class Controller:
         if self.config['start_capture']:
             self.model.start_recording()
 
+        self.view.show_user_settings()
+        self.view.show()
+        sys.exit(app.exec())
+
     def _create_hotkeys(self):
         # todo create hotkeys for:
         #  - get replay
