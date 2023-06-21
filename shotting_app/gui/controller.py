@@ -14,7 +14,7 @@ def _save_config(config, file_name):
         json.dump(config, file, indent=4)
 
 
-def get_config(file_name):
+def load_config(file_name):
     try:
         with open(file_name, "r") as config:
             out_conf = json.load(config)
@@ -33,13 +33,16 @@ def get_default_settings():
     return values.DEFAULT_CONFIG
 
 
+def get_config():
+    return values.ALL_CONFIG_VALUES
+
+
 class Controller:
     def __init__(self):
         app = QApplication(sys.argv)
         app.setStyleSheet(qdarkstyle.load_stylesheet_pyqt5())
 
-        self.view = UiMainWindow(self)
-        self.config = get_config(values.CONFIG_FILE_NAME)
+        self.config = load_config(values.CONFIG_FILE_NAME)
 
         try:
             capture.ENCODERS[self.config['codec']]
@@ -50,6 +53,9 @@ class Controller:
 
         _save_config(self.config, values.CONFIG_FILE_NAME)
         self.model = capture.Capture.from_config(self.config, encoder(self.config['fps']))
+
+        self.view = UiMainWindow(self)
+        self.set_config()
 
         self._run_tray()
         if not self.config['tray']:
@@ -82,15 +88,22 @@ class Controller:
         #       start new recording (if it was started before)
         ...
 
-    def get_config(self):
-        return self.config
-
     def set_config(self):
         # todo from config retrieve all necessary info
         #  convert values to strings
         #  calculate indices (indexes)
         #  set everything for the view
-        ...
+        self.view.video_hotkey.setText(self.config['video_hotkey'])
+        self.view.screen_hotkey.setText(self.config['screen_hotkey'])
+        self.view.sounds_button.setChecked(self.config['save_sound'])
+        self.view.quality_slider.setValue(self.config['quality'])
+        self.view.duration_horizontal_slider.setValue(self.config['duration'])
+        self.view.v_storage_line.setText(self.config['video_path'])
+        self.view.s_storage_line.setText(self.config['screen_path'])
+
+    def get_ram_usage(self):
+        # todo calculate ram usage based on config currently used
+        return 400
 
     def start_capture(self):
         self.model.start_recording()
