@@ -39,9 +39,10 @@ class UiMainWindow(QMainWindow):
         self.option_button = self.make_menu_button("option_button", "./icons/options_icon.png")
         self.video_button = self.make_menu_button("video_button", "./icons/video_icon.png")
         self.editor_button = self.make_menu_button("editor_button", "./icons/editor_icon.png")
-        spacerItem = QtWidgets.QSpacerItem(20, 150)
+        spacerItem = QtWidgets.QSpacerItem(20, 130)
         self.start_button = self.make_menu_button("start_button", "./icons/start_recording_icon.png")
         self.capture_button = self.make_menu_button("capture_button", os.path.join(".", "icons/capture_icon.png"))
+        self.screenshot_button = self.make_menu_button("screenshot_button", os.path.join(".", "icons/capture_icon.png"))
         self.stop_button = self.make_menu_button("stop_button", "./icons/stop_recording_icon.png")
         spacerItem2 = QtWidgets.QSpacerItem(20, 220, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
 
@@ -51,6 +52,7 @@ class UiMainWindow(QMainWindow):
         self.menu_vertical_layout.addItem(spacerItem)
         self.menu_vertical_layout.addWidget(self.start_button)
         self.menu_vertical_layout.addWidget(self.capture_button)
+        self.menu_vertical_layout.addWidget(self.screenshot_button)
         self.menu_vertical_layout.addWidget(self.stop_button)
         self.menu_vertical_layout.addItem(spacerItem2)
 
@@ -59,6 +61,7 @@ class UiMainWindow(QMainWindow):
         self.option_button.clicked.connect(self.select_option_widget)
         self.start_button.clicked.connect(self.start_capturing)
         self.capture_button.clicked.connect(self.capture_video)
+        self.screenshot_button.clicked.connect(self.capture_screenshot)
         self.stop_button.clicked.connect(self.stop_capturing)
 
         self.exit_button = self.make_menu_button("exit_button", "./icons/exit_icon.png")
@@ -344,22 +347,23 @@ class UiMainWindow(QMainWindow):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Screen Recorder", "Screen Recorder"))
         self.option_button.setText(_translate("Screen Recorder", "  Option"))
-        self.video_button.setText(_translate("Screen Recorder", "  Video"))
+        self.video_button.setText(_translate("Screen Recorder", "  Replay"))
         self.editor_button.setText(_translate("Screen Recorder", "  Video editor"))
         self.start_button.setText(_translate("Screen Recorder", "  Start"))
-        self.capture_button.setText(_translate("Screen Recorder", "  Capture"))
+        self.capture_button.setText(_translate("Screen Recorder", "  Replay"))
+        self.screenshot_button.setText(_translate("Screen Recorder", "  Screenshot"))
         self.stop_button.setText(_translate("Screen Recorder", "  Stop"))
         self.exit_button.setText(_translate("Screen Recorder", "  Exit"))
         self.resolution_label.setText(_translate("Screen Recorder", "Resolution"))
         self.FPS_label.setText(_translate("Screen Recorder", "FPS"))
-        self.extension_label.setText(_translate("Screen Recorder", "Video extension"))
-        self.photo_extension_label.setText(_translate("Screen Recorder", "Photo extension"))
-        self.v_hotkey.setText(_translate("Screen Recorder", "Video Hotkey"))
-        self.s_hotkey.setText(_translate("Screen Recorder", "Screen Hotkey"))
+        self.extension_label.setText(_translate("Screen Recorder", "Replay extension"))
+        self.photo_extension_label.setText(_translate("Screen Recorder", "Screenshot extension"))
+        self.v_hotkey.setText(_translate("Screen Recorder", "Replay Hotkey"))
+        self.s_hotkey.setText(_translate("Screen Recorder", "Screenshot Hotkey"))
         self.quality_label.setText(_translate("Screen Recorder", "Bitrate/Quality"))
-        self.duration_label.setText(_translate("Screen Recorder", "Video duration (s)"))
-        self.v_storage_label.setText(_translate("Screen Recorder", "Video storage path"))
-        self.s_storage_label.setText(_translate("Screen Recorder", "Screen storage path"))
+        self.duration_label.setText(_translate("Screen Recorder", "Replay duration (s)"))
+        self.v_storage_label.setText(_translate("Screen Recorder", "Replay storage path"))
+        self.s_storage_label.setText(_translate("Screen Recorder", "Screenshot storage path"))
         self.display_label.setText(_translate("Screen Recorder", "Display"))
         self.v_storage_browse.setText(_translate("Screen Recorder", "Browse"))
         self.s_storage_browse.setText(_translate("Screen Recorder", "Browse"))
@@ -392,6 +396,9 @@ class UiMainWindow(QMainWindow):
 
     def capture_video(self):
         self.controller.export_replay()
+
+    def capture_screenshot(self):
+        self.controller.export_screenshot()
 
     def close_button_action(self):
         self.hide()
