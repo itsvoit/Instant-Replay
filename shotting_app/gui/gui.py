@@ -23,7 +23,7 @@ class UiMainWindow(QMainWindow):
 
     def __init__(self, controller):
         super().__init__()
-        self.setWindowIcon(QIcon("./icons/video_creationg_content_forward_video_media_icon-icons.com_55208"))
+        self.setWindowIcon(QIcon("./icons/application_icon.png"))
         self.setObjectName("Screen Recorder")
         self.resize(875, 612)
         self.setMinimumSize(QtCore.QSize(875, 612))
@@ -35,35 +35,33 @@ class UiMainWindow(QMainWindow):
         self.menu_vertical_layout = self.make_menu_layout()
         self.option_v_layout = self.make_vertical_layaut("verticalLayout_4", self.full_menu_widget)
 
-        self.option_button = self.make_menu_button("option_button", "./icons/settings_cogwheel_options_icon_149387.png")
+        self.option_button = self.make_menu_button("option_button", "./icons/options_icon.png")
         self.option_button.clicked.connect(self.select_option_widget)
 
         self.menu_vertical_layout.addWidget(self.option_button)
 
-        self.video_button = self.make_menu_button("video_button",
-                                                  "./icons/movie-symbol-of-video-camera_icon-icons.com_72981.png")
+        self.video_button = self.make_menu_button("video_button", "./icons/video_icon.png")
 
         self.menu_vertical_layout.addWidget(self.video_button)
 
-        self.editor_button = self.make_menu_button("editor_button",
-                                                   "./icons/iconfinder-videoeditingeditorslicecrop-3993845_112640.png")
+        self.editor_button = self.make_menu_button("editor_button", "./icons/editor_icon.png")
 
         self.menu_vertical_layout.addWidget(self.editor_button)
 
         spacerItem = QtWidgets.QSpacerItem(20, 150)
         self.menu_vertical_layout.addItem(spacerItem)
 
-        self.start_button = self.make_menu_button("start_button",
-                                                  "./icons/active_audio_start_player_button_music_play_icon_219332.png")
+        self.start_button = self.make_menu_button("start_button", "./icons/start_recording_icon.png")
         self.start_button.clicked.connect(self.start_capturing)
         self.menu_vertical_layout.addWidget(self.start_button)
 
+        # todo rename icon to something humanly readable
         self.capture_button = self.make_menu_button("capture_button",
                                                     os.path.join(".", "icons/frame-expand_icon-icons.com_48296.png"))
         self.capture_button.clicked.connect(self.capture_video)
         self.menu_vertical_layout.addWidget(self.capture_button)
 
-        self.stop_button = self.make_menu_button("stop_button", "./icons/squareinsideacircle_120602.png")
+        self.stop_button = self.make_menu_button("stop_button", "./icons/stop_recording_icon.png")
         self.stop_button.clicked.connect(self.stop_capturing)
         self.menu_vertical_layout.addWidget(self.stop_button)
 
