@@ -65,7 +65,7 @@ class UiMainWindow(QMainWindow):
 
         self.exit_button = self.make_menu_button("exit_button", "./icons/powercircleandlinesymbol_118369.png")
 
-        self.exit_button.clicked.connect(self.close_app)
+        self.exit_button.clicked.connect(self.close_button_action)
         self.option_v_layout.addWidget(self.exit_button)
 
         self.main_widget = self.make_main_widget()
@@ -373,8 +373,9 @@ class UiMainWindow(QMainWindow):
     # Override events
 
     def closeEvent(self, event: QtGui.QCloseEvent) -> None:
-        event.ignore()
-        self.hide()
+        if not self.should_close:
+            event.ignore()
+            self.hide()
 
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.WindowStateChange:
@@ -419,24 +420,10 @@ class UiMainWindow(QMainWindow):
         self.ram_display.display(self.controller.get_ram_usage())
 
     def restart_settings(self):
-        self.show_settings(self.controller.get_default_settings())
+        self.controller.set_default_config()
 
     def save_settings(self):
-        new_settings = {'resolution': self.resolution_combo_box.currentText(),
-                        'fps': self.FPS_combo_box.currentText(),
-                        'codec': self.extension_combo_box.currentText(),
-                        'display': self.display_combo_box.currentText(),
-                        'video_hotkey': self.video_hotkey.text(),
-                        'screen_hotkey': self.screen_hotkey.text(),
-                        'save_sound': self.sounds_button.isChecked(),
-                        'quality': self.quality_slider.value(),
-                        'duration': self.duration_horizontal_slider.value(),
-                        'video_path': self.v_storage_line.text(),
-                        'screen_path': self.s_storage_line.text(),
-                        'ram_usage': 0}
-
-        settings = self.controller.save_settings(new_settings)
-        self.show_settings(settings)
+        self.controller.update_config_from_gui()
 
     def browse_v_storage(self):
         folder = QFileDialog.getExistingDirectory(QMainWindow(), "Wybierz folder")
