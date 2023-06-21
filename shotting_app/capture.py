@@ -9,6 +9,7 @@ from io import BytesIO
 from multiprocessing import Queue, Pipe, Manager
 
 import cv2
+import dxcam
 import mss
 import numpy as np
 from PIL import Image
@@ -130,7 +131,10 @@ class RecorderProcess(multiprocessing.Process):
     def run(self):
         if self.verbose:
             print("[Capture/Record] Recording process running...")
-        with mss.mss() as sct:
+        # recorder = dxcam.create(output_color="BGR")
+        # recorder.start(target_fps=60, video_mode=True)
+        with dxcam.create(max_buffer_len=7200, output_color="BGR") as sct:
+            sct.start(target_fps=60, video_mode=True)
             mon = sct.monitors[self.display]
             self.task.send(mon)
             previous_shot = time.perf_counter_ns()
@@ -145,6 +149,7 @@ class RecorderProcess(multiprocessing.Process):
 
                 previous_shot = time.perf_counter_ns()
                 sct_img = sct.grab(mon)
+                # sct_img =
                 self.img_queue.put(sct_img)
 
         if self.verbose:

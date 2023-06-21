@@ -1,4 +1,7 @@
+import os
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QIcon
 from PyQt5.QtWidgets import QMainWindow, QFileDialog
 
 widget_back_ground = "background-color: #505F72"
@@ -16,6 +19,7 @@ class UiMainWindow(QMainWindow):
 
     def __init__(self, controller):
         super().__init__()
+        self.setWindowIcon(QIcon("./icons/video_creationg_content_forward_video_media_icon-icons.com_55208"))
         self.setObjectName("Screen Recorder")
         self.resize(875, 612)
         self.setMinimumSize(QtCore.QSize(875, 612))
@@ -24,41 +28,46 @@ class UiMainWindow(QMainWindow):
         self.controller = controller
         self.central_widget = self.make_central_widget()
         self.full_menu_widget = self.make_menu_widget()
-        self.menu_vertica_layout = self.make_menu_layout()
+        self.menu_vertical_layout = self.make_menu_layout()
         self.option_v_layout = self.make_vertical_layaut("verticalLayout_4", self.full_menu_widget)
 
         self.option_button = self.make_menu_button("option_button", "./icons/settings_cogwheel_options_icon_149387.png")
         self.option_button.clicked.connect(self.select_option_widget)
 
-        self.menu_vertica_layout.addWidget(self.option_button)
+        self.menu_vertical_layout.addWidget(self.option_button)
 
         self.video_button = self.make_menu_button("video_button",
                                                   "./icons/movie-symbol-of-video-camera_icon-icons.com_72981.png")
 
-        self.menu_vertica_layout.addWidget(self.video_button)
+        self.menu_vertical_layout.addWidget(self.video_button)
 
         self.editor_button = self.make_menu_button("editor_button",
                                                    "./icons/iconfinder-videoeditingeditorslicecrop-3993845_112640.png")
 
-        self.menu_vertica_layout.addWidget(self.editor_button)
+        self.menu_vertical_layout.addWidget(self.editor_button)
 
         spacerItem = QtWidgets.QSpacerItem(20, 170)
-        self.menu_vertica_layout.addItem(spacerItem)
+        self.menu_vertical_layout.addItem(spacerItem)
 
         self.start_button = self.make_menu_button("start_button",
                                                   "./icons/active_audio_start_player_button_music_play_icon_219332.png")
-        self.start_button.clicked.connect(self.satrt_capturing)
-        self.menu_vertica_layout.addWidget(self.start_button)
+        self.start_button.clicked.connect(self.start_capturing)
+        self.menu_vertical_layout.addWidget(self.start_button)
         # self.menu_vertica_layout.addWidget(QtWidgets.QLabel())
+
+        self.capture_button = self.make_menu_button("capture_button",
+                                                    os.path.join(".", "icons/frame-expand_icon-icons.com_48296.png"))
+        self.capture_button.clicked.connect(self.capture_video)
+        self.menu_vertical_layout.addWidget(self.capture_button)
 
         self.stop_button = self.make_menu_button("stop_button", "./icons/squareinsideacircle_120602.png")
         self.stop_button.clicked.connect(self.stop_capturing)
-        self.menu_vertica_layout.addWidget(self.stop_button)
+        self.menu_vertical_layout.addWidget(self.stop_button)
 
         spacerItem = QtWidgets.QSpacerItem(20, 250, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
-        self.menu_vertica_layout.addItem(spacerItem)
+        self.menu_vertical_layout.addItem(spacerItem)
 
-        self.option_v_layout.addLayout(self.menu_vertica_layout)
+        self.option_v_layout.addLayout(self.menu_vertical_layout)
 
         self.exit_button = self.make_menu_button("exit_button", "./icons/powercircleandlinesymbol_118369.png")
 
@@ -175,11 +184,14 @@ class UiMainWindow(QMainWindow):
         self.show_user_settings()
         QtCore.QMetaObject.connectSlotsByName(self)
 
-    def satrt_capturing(self):
+    def start_capturing(self):
         self.controller.start_capture()
 
     def stop_capturing(self):
         self.controller.stop_capture()
+
+    def capture_video(self):
+        self.controller.get_replay()
 
     def make_central_widget(self):
         central_widget = QtWidgets.QWidget(self)
@@ -219,7 +231,7 @@ class UiMainWindow(QMainWindow):
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(icon_path), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         button.setIcon(icon)
-        button.setIconSize(QtCore.QSize(30, 30))
+        button.setIconSize(QtCore.QSize(20, 50))
         button.setCheckable(True)
         button.setAutoExclusive(True)
         button.setObjectName(name)
@@ -354,7 +366,7 @@ class UiMainWindow(QMainWindow):
         self.main_stacked_widget.setCurrentIndex(0)
 
     def show_user_settings(self):
-        self.show_settings(self.controller.get_user_settings())
+        self.controller.set_config()
 
     def show_settings(self, settings):
         self.resolution_combo_box.clear()
@@ -373,16 +385,7 @@ class UiMainWindow(QMainWindow):
         self.display_combo_box.addItems(settings['display'])
         self.display_combo_box.setCurrentIndex(0)
 
-        self.video_hotkey.setText(settings['video_hotkey'])
-        self.screen_hotkey.setText(settings['screen_hotkey'])
-
-        self.sounds_button.setChecked(settings['save_sound'])
-        self.quality_slider.setValue(settings['quality'])
-        self.duration_horizontal_slider.setValue(settings['duration'])
-        self.v_storage_line.setText(settings['video_path'])
-        self.s_storage_line.setText(settings['screen_path'])
-
-        self.ram_display.display(settings['ram_usage'])
+        self.ram_display.display(self.controller.get_ram_usage())
 
     def restart_settings(self):
         self.show_settings(self.controller.get_default_settings())
