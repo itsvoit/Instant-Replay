@@ -151,7 +151,6 @@ class Controller:
             p_encoder(capture.FileSaver(p_path, p_pref, p_ext)),
             verbose=True)
 
-
     def _set_config_options(self):
         """
         Get all possible options and display them in view
@@ -160,6 +159,7 @@ class Controller:
         self.view.resolution_combo_box.addItems([str(x) for x in options['resolution']])
         self.view.FPS_combo_box.addItems([str(x) for x in options['fps']])
         self.view.extension_combo_box.addItems([str(x) for x in options['codec']])
+        self.view.photo_extension_combo_box.addItems([str(x) for x in options['p_ext']])
         self.view.display_combo_box.addItems([str(x) for x in options['display']])
 
     def _setup_services(self):
@@ -185,12 +185,12 @@ class Controller:
         self.config['resolution'] = self.view.resolution_combo_box.currentText()
         self.config['fps'] = int(self.view.FPS_combo_box.currentText())
         self.config['codec'] = self.view.extension_combo_box.currentText()
+        self.config['p_ext'] = self.view.photo_extension_combo_box.currentText()
         self.config['display'] = self.view.display_combo_box.currentIndex() + 1
 
         # Get normal values
         self.config['video_hotkey'] = self.view.video_hotkey.text()
         self.config['screen_hotkey'] = self.view.screen_hotkey.text()
-        self.config['save_sound'] = self.view.sounds_button.isChecked()
         self.config['quality'] = int(self.view.quality_slider.value())
         self.config['duration'] = int(self.view.duration_horizontal_slider.value())
         self.config['video_path'] = self.view.v_storage_line.text()
@@ -219,16 +219,17 @@ class Controller:
         resolution_index = d_conf['resolution'].index(config['resolution'])
         fps_index = d_conf['fps'].index(config['fps'])
         codec_index = d_conf['codec'].index(config['codec'])
+        p_ext_index = d_conf['p_ext'].index(config['p_ext'])
         display_index = d_conf['display'].index(config['display'])
         self.view.resolution_combo_box.setCurrentIndex(resolution_index)
         self.view.FPS_combo_box.setCurrentIndex(fps_index)
         self.view.extension_combo_box.setCurrentIndex(codec_index)
+        self.view.photo_extension_combo_box.setCurrentIndex(p_ext_index)
         self.view.display_combo_box.setCurrentIndex(display_index)
 
         # Set values in view
         self.view.video_hotkey.setText(config['video_hotkey'])
         self.view.screen_hotkey.setText(config['screen_hotkey'])
-        self.view.sounds_button.setChecked(config['save_sound'])
         self.view.quality_slider.setValue(config['quality'])
         self.view.duration_horizontal_slider.setValue(config['duration'])
         self.view.v_storage_line.setText(config['video_path'])

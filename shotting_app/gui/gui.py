@@ -76,18 +76,18 @@ class UiMainWindow(QMainWindow):
 
         self.resolution_combo_box = self.make_combo_box("resolution_combo_box", (270, 30))
         self.FPS_combo_box = self.make_combo_box('FPS_combo_box', (270, 80))
-        self.extension_combo_box = self.make_combo_box('extention_combo_box', (270, 130))
-        self.display_combo_box = self.make_combo_box('display_combo_box', (270, 530))
-
-        self.s_storage_line = self.make_storage_line('s_storage_line', (270, 480))
-        self.s_storage_line.setDisabled(True)
-        self.v_storage_line = self.make_storage_line("v_storage_line", (270, 430))
-        self.v_storage_line.setDisabled(True)
+        self.extension_combo_box = self.make_combo_box('extension_combo_box', (270, 130))
+        self.photo_extension_combo_box = self.make_combo_box('extension_combo_box', (270, 180))
 
         self.quality_slider = self.make_slider("quality_slider", (270, 330), 1, 95)
 
-        self.sounds_button = self.make_check_button("sounds_button", (350, 280))
-        self.sounds_button.setDisabled(True)
+        self.v_storage_line = self.make_storage_line("v_storage_line", (270, 430))
+        self.v_storage_line.setDisabled(True)
+
+        self.s_storage_line = self.make_storage_line('s_storage_line', (270, 480))
+
+        self.display_combo_box = self.make_combo_box('display_combo_box', (270, 530))
+        self.s_storage_line.setDisabled(True)
 
         self.layout_widget_labels = self.make_layout_widget_for_label()
 
@@ -103,14 +103,14 @@ class UiMainWindow(QMainWindow):
         self.extension_label = self.make_label("extension_label", self.layout_widget_labels)
         self.menu_label_vertica_layout.addWidget(self.extension_label)
 
+        self.photo_extension_label = self.make_label("photo_extension_label", self.layout_widget_labels)
+        self.menu_label_vertica_layout.addWidget(self.photo_extension_label)
+
         self.v_hotkey = self.make_label("v_hotkey", self.layout_widget_labels)
         self.menu_label_vertica_layout.addWidget(self.v_hotkey)
 
         self.s_hotkey = self.make_label("s_hotkey", self.layout_widget_labels)
         self.menu_label_vertica_layout.addWidget(self.s_hotkey)
-
-        self.sound_label = self.make_label("sound_label", self.layout_widget_labels)
-        self.menu_label_vertica_layout.addWidget(self.sound_label)
 
         self.quality_label = self.make_label("quality_label", self.layout_widget_labels)
         self.menu_label_vertica_layout.addWidget(self.quality_label)
@@ -145,9 +145,9 @@ class UiMainWindow(QMainWindow):
 
         self.v_dur_display = self.make_lcd_display("v_dur_display", (470, 380), 91, 32)
 
-        self.video_hotkey = self.make_line("video_path", (270, 180))
+        self.video_hotkey = self.make_line("video_path", (270, 230))
 
-        self.screen_hotkey = self.make_line("screen_path", (270, 230))
+        self.screen_hotkey = self.make_line("screen_path", (270, 280))
 
         self.ram_label = self.make_label("ram_req_label", self.option)
         self.ram_label.setGeometry(QtCore.QRect(480, 60, 201, 41))
@@ -354,10 +354,10 @@ class UiMainWindow(QMainWindow):
         self.exit_button.setText(_translate("Screen Recorder", "  Exit"))
         self.resolution_label.setText(_translate("Screen Recorder", "Resolution"))
         self.FPS_label.setText(_translate("Screen Recorder", "FPS"))
-        self.extension_label.setText(_translate("Screen Recorder", "Extension"))
+        self.extension_label.setText(_translate("Screen Recorder", "Video extension"))
+        self.photo_extension_label.setText(_translate("Screen Recorder", "Photo extension"))
         self.v_hotkey.setText(_translate("Screen Recorder", "Video Hotkey"))
         self.s_hotkey.setText(_translate("Screen Recorder", "Screen Hotkey"))
-        self.sound_label.setText(_translate("Screen Recorder", "Save with sounds"))
         self.quality_label.setText(_translate("Screen Recorder", "Bitrate/Quality"))
         self.duration_label.setText(_translate("Screen Recorder", "Video duration (s)"))
         self.v_storage_label.setText(_translate("Screen Recorder", "Video storage path"))
@@ -405,16 +405,19 @@ class UiMainWindow(QMainWindow):
         self.resolution_combo_box.clear()
         self.FPS_combo_box.clear()
         self.extension_combo_box.clear()
+        self.photo_extension_combo_box.clear()
         self.display_combo_box.clear()
 
         self.resolution_combo_box.addItems(settings['resolution'])
         self.FPS_combo_box.addItems(settings['fps'])
         self.extension_combo_box.addItems(settings['codec'])
+        self.photo_extension_combo_box.addItems(settings['p_ext'])
         self.display_combo_box.addItems(settings['display'])
 
         self.resolution_combo_box.setCurrentIndex(0)
         self.FPS_combo_box.setCurrentIndex(0)
         self.extension_combo_box.setCurrentIndex(0)
+        self.photo_extension_combo_box.setCurrentIndex(0)
         self.display_combo_box.setCurrentIndex(0)
 
         self.ram_display.display(self.controller.get_ram_usage())
