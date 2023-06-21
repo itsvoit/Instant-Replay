@@ -3,7 +3,7 @@ import os
 import keyboard
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import Qt
-from PyQt5.QtGui import  QTextOption
+from PyQt5.QtGui import QTextOption
 
 from PyQt5.QtCore import pyqtSlot
 from PyQt5.QtGui import QIcon
@@ -179,22 +179,6 @@ class UiMainWindow(QMainWindow):
 
         self.duration_horizontal_slider.valueChanged['int'].connect(self.v_dur_display.display)
         QtCore.QMetaObject.connectSlotsByName(self)
-
-    def line_press_event(self, event):
-        modifiers = ['alt', 'shift', 'ctrl']
-        key1 = None
-
-        for modifier in modifiers:
-            if keyboard.is_pressed(modifier):
-                key1 = modifier
-        key2 = keyboard.read_key()
-
-        line_text = self.video_hotkey if self.video_hotkey.hasFocus() else self.screen_hotkey
-
-        if key2 and key1 and key1 != key2:
-            line_text.setText(f"{key1}+{key2}")
-
-        line_text.clearFocus()
 
     def make_central_widget(self):
         central_widget = QtWidgets.QWidget(self)
@@ -408,6 +392,31 @@ class UiMainWindow(QMainWindow):
             if self.windowState() & QtCore.Qt.WindowMinimized:
                 event.ignore()
                 self.hide()
+
+    def line_press_event(self, event):
+        modifiers = {'alt', 'shift', 'ctrl'}
+        pressed = set()
+
+        for modifier in modifiers:
+            if keyboard.is_pressed(modifier):
+                pressed.add(modifier)
+        key = keyboard.read_key()
+        if key in modifiers or len(pressed) < 1:
+            return
+
+        line_text = self.video_hotkey if self.video_hotkey.hasFocus() else self.screen_hotkey
+
+        text = ""
+        if key:
+            for mod in pressed:
+                text += f"<{mod}>+"
+        text += key.lower()
+        if (self.video_hotkey is line_text and self.screen_hotkey.text() == text) or \
+                (self.screen_hotkey is line_text and self.video_hotkey.text() == text):
+            return
+
+        line_text.setText(text)
+        line_text.clearFocus()
 
     # ---------------------------------------------------------------------------------
     # Event methods
