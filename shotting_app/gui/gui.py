@@ -358,30 +358,42 @@ class UiMainWindow(QMainWindow):
 
         return path
 
+    def closeEvent(self, event: QtGui.QCloseEvent) -> None:
+        event.ignore()
+        self.hide()
+
+    def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.WindowStateChange:
+            if self.windowState() & QtCore.Qt.WindowMinimized:
+                event.ignore()
+                self.hide()
+
+    def close_button_action(self):
+        self.hide()
+
     def close_app(self):
-        self.close()
+        self.controller.close_app()
 
     def select_option_widget(self):
         self.main_stacked_widget.setCurrentIndex(0)
 
     def show_user_settings(self):
-        self.controller.set_config()
+        self.controller.set_config_for_gui()
 
     def show_settings(self, settings):
         self.resolution_combo_box.clear()
-        self.resolution_combo_box.addItems(settings['resolution'])
-        self.resolution_combo_box.setCurrentIndex(0)
-
         self.FPS_combo_box.clear()
-        self.FPS_combo_box.addItems(settings['fps'])
-        self.FPS_combo_box.setCurrentIndex(0)
-
         self.extension_combo_box.clear()
-        self.extension_combo_box.addItems(settings['codec'])
-        self.extension_combo_box.setCurrentIndex(0)
-
         self.display_combo_box.clear()
+
+        self.resolution_combo_box.addItems(settings['resolution'])
+        self.FPS_combo_box.addItems(settings['fps'])
+        self.extension_combo_box.addItems(settings['codec'])
         self.display_combo_box.addItems(settings['display'])
+
+        self.resolution_combo_box.setCurrentIndex(0)
+        self.FPS_combo_box.setCurrentIndex(0)
+        self.extension_combo_box.setCurrentIndex(0)
         self.display_combo_box.setCurrentIndex(0)
 
         self.ram_display.display(self.controller.get_ram_usage())
