@@ -1,4 +1,7 @@
+import os
+
 APP_NAME = "Instant Replay"
+ROOT_DIR, _ = os.path.split(os.path.dirname(os.path.abspath(__file__)))
 
 CONFIG_FILE_NAME = "config.json"
 CAPTURE_JPEG = "JPEG"
@@ -41,7 +44,7 @@ DEFAULT_CONFIG = {
 
 
 ALL_CONFIG_VALUES = {
-                'resolution': ['1920x1080'],
+                'resolution': ['3840x2160', '2560x1440', '1920x1080', '1280x720'],
                 'fps': [10, 15, 20, 25, 30],
                 'codec': ['mp4'],
                 'p_ext': ["png", "jpeg"],
@@ -55,12 +58,11 @@ TASK_KILL = "KILL"
 TASK_TRIM = "TRIM"
 TASK_SHOT = "SHOT"
 
-APP_ICON = "icons/application_icon.png"
-CAPTURE_ICON = "icons/capture_icon.png"
-EDITOR_ICON = "icons/editor_icon.png"
-EXIT_ICON = "icons/exit_icon.png"
-OPTIONS_ICON = "icons/options_icon.png"
-START_REC_ICON = "icons/start_recording_icon.png"
-STOP_REC_ICON = "icons/stop_recording_icon.png"
-VIDEO_ICON = "icons/video_icon.png"
-
+APP_ICON = os.path.join(ROOT_DIR, "icons/application_icon.png")
+CAPTURE_ICON = os.path.join(ROOT_DIR, "icons/capture_icon.png")
+EDITOR_ICON = os.path.join(ROOT_DIR, "icons/editor_icon.png")
+EXIT_ICON = os.path.join(ROOT_DIR, "icons/exit_icon.png")
+OPTIONS_ICON = os.path.join(ROOT_DIR, "icons/options_icon.png")
+START_REC_ICON = os.path.join(ROOT_DIR, "icons/start_recording_icon.png")
+STOP_REC_ICON = os.path.join(ROOT_DIR, "icons/stop_recording_icon.png")
+VIDEO_ICON = os.path.join(ROOT_DIR, "icons/video_icon.png")

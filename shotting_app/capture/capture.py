@@ -18,7 +18,10 @@ import shotting_app.values as values
 
 
 class Frame:
-    def __init__(self, sct_img, format_, quality):
+    def __init__(self,
+                 sct_img,
+                 format_,
+                 quality):
         self.buffered_img = BytesIO()
         self.size = sct_img.size
         self.format_ = format_
@@ -37,7 +40,10 @@ class Frame:
 
 
 class FileSaver:
-    def __init__(self, directory, file_prefix, file_extension):
+    def __init__(self,
+                 directory,
+                 file_prefix,
+                 file_extension):
         self.directory = directory
         self.file_prefix = file_prefix
         self.file_extension = file_extension
@@ -77,7 +83,9 @@ class FileSaver:
 
 
 class VideoEncoder:
-    def __init__(self, fps, file_saver: FileSaver):
+    def __init__(self,
+                 fps,
+                 file_saver: FileSaver):
         self.fps = fps
         self.file_saver = file_saver
 
@@ -87,7 +95,9 @@ class VideoEncoder:
 
 
 class Mp4VideoEncoder(VideoEncoder):
-    def __init__(self, fps, file_saver: FileSaver = FileSaver("videos", "video", "mp4")):
+    def __init__(self,
+                 fps,
+                 file_saver: FileSaver = FileSaver("videos", "video", "mp4")):
         super().__init__(fps, file_saver)
 
     # noinspection PyUnresolvedReferences
@@ -104,7 +114,9 @@ class Mp4VideoEncoder(VideoEncoder):
 
 class SomeOtherVideoEncoder(VideoEncoder):
     # todo new encoding
-    def __init__(self, fps, file_saver: FileSaver = FileSaver("videos", "video", "mp4")):
+    def __init__(self,
+                 fps,
+                 file_saver: FileSaver = FileSaver("videos", "video", "mp4")):
         super().__init__(fps, file_saver)
 
     def encode(self, frames: list[Frame], screen_size):
@@ -117,29 +129,38 @@ VID_ENCODERS = {"mp4": Mp4VideoEncoder,
 
 
 class PhotoEncoder:
-    def __init__(self, file_saver: FileSaver):
+    def __init__(self,
+                 file_saver: FileSaver):
         self.file_saver = file_saver
 
     @abstractmethod
-    def encode(self, sct_img, screen_size):
+    def encode(self, sct_img, screen_size, scale=None):
         pass
 
 
 class PngEncoder(PhotoEncoder):
-    def __init__(self, file_saver: FileSaver = FileSaver("photos", "screenshot", "png")):
+    def __init__(self,
+                 file_saver: FileSaver = FileSaver("photos", "screenshot", "png")):
         PhotoEncoder.__init__(self, file_saver)
 
-    def encode(self, sct_img, screen_size):
+    def encode(self, sct_img, screen_size, scale=None):
         img = Image.frombytes("RGB", screen_size, sct_img.bgra, "raw", "BGRX")
         img.save(self.file_saver.get_free_path(), format=values.CAPTURE_PNG, quality=95)
 
 
 class JpegEncoder(PhotoEncoder):
-    def __init__(self, file_saver: FileSaver = FileSaver("photos", "screenshot", "jpeg")):
+    def __init__(self,
+                 file_saver: FileSaver = FileSaver("photos", "screenshot", "jpeg")):
         PhotoEncoder.__init__(self, file_saver)
         ...
 
-    def encode(self, sct_img, screen_size):
+    def encode(self, sct_img, screen_size, scale=None):
+        if scale:
+            try:
+                width, height = scale
+                sct_img = cv2.resize(sct_img, (width, height))
+            except Exception:
+                pass
         img = Image.frombytes("RGB", screen_size, sct_img.bgra, "raw", "BGRX")
         img.save(self.file_saver.get_free_path(), format=values.CAPTURE_PNG, quality=95)
 
@@ -151,7 +172,13 @@ P_ENCODERS = {
 
 
 class RecorderProcess(multiprocessing.Process):
-    def __init__(self, img_queue, rec_conn, shot_conn, interval, display, verbose=False):
+    def __init__(self,
+                 img_queue,
+                 rec_conn,
+                 shot_conn,
+                 interval,
+                 display,
+                 verbose=False):
         multiprocessing.Process.__init__(self)
         # Communication
         self.img_queue = img_queue
@@ -196,7 +223,15 @@ class RecorderProcess(multiprocessing.Process):
 
 
 class ConvertProcess(multiprocessing.Process):
-    def __init__(self, img_queue, buffered_frames, trim_send, length, fps, format_, quality, verbose=False):
+    def __init__(self,
+                 img_queue,
+                 buffered_frames,
+                 trim_send,
+                 length,
+                 fps,
+                 format_,
+                 quality,
+                 verbose=False):
         multiprocessing.Process.__init__(self)
         # Communication
         self.img_queue = img_queue
@@ -235,7 +270,12 @@ class ConvertProcess(multiprocessing.Process):
 
 
 class TrimProcess(multiprocessing.Process):
-    def __init__(self, buffered_frames, trim_recv, length, fps, verbose=False):
+    def __init__(self,
+                 buffered_frames,
+                 trim_recv,
+                 length,
+                 fps,
+                 verbose=False):
         multiprocessing.Process.__init__(self)
         # Communication
         self.buffered_frames = buffered_frames
@@ -268,10 +308,19 @@ class TrimProcess(multiprocessing.Process):
 
 
 class Capture:
-    def __init__(self, video_encoder: VideoEncoder, photo_encoder: PhotoEncoder, display=1, quality=80, fps=20, length=10,
-                 with_sound: bool = False, verbose: bool = False):
+    def __init__(self,
+                 video_encoder: VideoEncoder,
+                 photo_encoder: PhotoEncoder,
+                 display=1,
+                 resolution=(1920, 1080),
+                 quality=80,
+                 fps=20,
+                 length=10,
+                 with_sound: bool = False,
+                 verbose: bool = False):
         # Recording options
         self.display = display
+        self.resolution = resolution
         self.quality = quality  # quality of the saved frames (increase for more ram usage)
         self.format_ = values.CAPTURE_JPEG  # todo add new extensions
         self.fps = fps
@@ -308,11 +357,16 @@ class Capture:
 
     @classmethod
     def from_config(cls, config, video_encoder: VideoEncoder, photo_encoder: PhotoEncoder, verbose=False):
-        # todo - update config to have all necessary options
+        match = re.match(r"(?P<width>\d*)x(?P<height>\d*)", config['resolution'])
+        try:
+            resolution = (int(match['width']), int(match['height'])) if match else values.DEFAULT_RESOLUTION
+        except ValueError:
+            resolution = values.DEFAULT_RESOLUTION
         return cls(
             video_encoder=video_encoder,
             photo_encoder=photo_encoder,
             display=config['display'],
+            resolution=resolution,
             quality=config['quality'],
             fps=config['fps'],
             length=config['duration'],
@@ -329,13 +383,13 @@ class Capture:
                                         verbose=self.verbose)
 
     def start_recording(self):
-        # todo wait for processes to start and return True
         if self.verbose:
             self.rec_process.verbose = True
             self.conv_process.verbose = True
             self.trim_process.verbose = True
 
         self.is_recording = True
+
         # Run all the processes
         self.rec_process.start()
         self.conv_process.start()
@@ -393,7 +447,7 @@ class Capture:
         if self.rec_conn1.poll():
             self.mon = self.rec_conn1.recv()
         screen_size = (self.mon['width'], self.mon['height']) if self.mon is not None else values.DEFAULT_SCREEN_SIZE
-        self.photo_encoder.encode(self.shot_conn1.recv(), screen_size)
+        self.photo_encoder.encode(self.shot_conn1.recv(), screen_size, self.resolution)
 
     def get_video_encoder(self):
         return self.video_encoder
