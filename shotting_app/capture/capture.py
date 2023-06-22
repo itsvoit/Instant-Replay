@@ -9,6 +9,7 @@ from io import BytesIO
 from multiprocessing import Queue, Pipe, Manager
 
 import cv2
+import dxcam
 import mss
 import numpy as np
 from PIL import Image
@@ -17,12 +18,17 @@ import shotting_app.values as values
 
 
 class Frame:
-    def __init__(self, sct_img, format_, quality):
+    def __init__(self,
+                 sct_img,
+                 format_,
+                 quality):
         self.buffered_img = BytesIO()
         self.size = sct_img.size
         self.format_ = format_
 
-        img = Image.frombytes("RGB", self.size, sct_img.bgra, "raw", "BGRX")
+        img = Image.frombytes("RGB", self.size, sct_img.bgra, "raw", "BGRX") if hasattr(sct_img, "bgra")  \
+            else Image.frombytes("RGB", self.size, sct_img, "raw", "BGRX")
+
         img.save(self.buffered_img, format=format_, quality=quality)
 
     def to_file(self, path_):
@@ -34,7 +40,10 @@ class Frame:
 
 
 class FileSaver:
-    def __init__(self, directory, file_prefix, file_extension):
+    def __init__(self,
+                 directory,
+                 file_prefix,
+                 file_extension):
         self.directory = directory
         self.file_prefix = file_prefix
         self.file_extension = file_extension
@@ -74,7 +83,9 @@ class FileSaver:
 
 
 class VideoEncoder:
-    def __init__(self, fps, file_saver: FileSaver):
+    def __init__(self,
+                 fps,
+                 file_saver: FileSaver):
         self.fps = fps
         self.file_saver = file_saver
 
@@ -84,7 +95,9 @@ class VideoEncoder:
 
 
 class Mp4VideoEncoder(VideoEncoder):
-    def __init__(self, fps, file_saver: FileSaver = FileSaver("videos", "video", "mp4")):
+    def __init__(self,
+                 fps,
+                 file_saver: FileSaver = FileSaver("videos", "video", "mp4")):
         super().__init__(fps, file_saver)
 
     # noinspection PyUnresolvedReferences
@@ -101,24 +114,76 @@ class Mp4VideoEncoder(VideoEncoder):
 
 class SomeOtherVideoEncoder(VideoEncoder):
     # todo new encoding
-    def __init__(self, fps, file_saver: FileSaver = FileSaver("videos", "video", "mp4")):
+    def __init__(self,
+                 fps,
+                 file_saver: FileSaver = FileSaver("videos", "video", "mp4")):
         super().__init__(fps, file_saver)
 
     def encode(self, frames: list[Frame], screen_size):
         ...
 
 
-ENCODERS = {"mp4": Mp4VideoEncoder,
-            "other": SomeOtherVideoEncoder
-            }
+VID_ENCODERS = {"mp4": Mp4VideoEncoder,
+                "other": SomeOtherVideoEncoder
+                }
+
+
+class PhotoEncoder:
+    def __init__(self,
+                 file_saver: FileSaver):
+        self.file_saver = file_saver
+
+    @abstractmethod
+    def encode(self, sct_img, screen_size, scale=None):
+        pass
+
+
+class PngEncoder(PhotoEncoder):
+    def __init__(self,
+                 file_saver: FileSaver = FileSaver("photos", "screenshot", "png")):
+        PhotoEncoder.__init__(self, file_saver)
+
+    def encode(self, sct_img, screen_size, scale=None):
+        img = Image.frombytes("RGB", screen_size, sct_img.bgra, "raw", "BGRX")
+        img.save(self.file_saver.get_free_path(), format=values.CAPTURE_PNG, quality=95)
+
+
+class JpegEncoder(PhotoEncoder):
+    def __init__(self,
+                 file_saver: FileSaver = FileSaver("photos", "screenshot", "jpeg")):
+        PhotoEncoder.__init__(self, file_saver)
+        ...
+
+    def encode(self, sct_img, screen_size, scale=None):
+        if scale:
+            try:
+                width, height = scale
+                sct_img = cv2.resize(sct_img, (width, height))
+            except Exception:
+                pass
+        img = Image.frombytes("RGB", screen_size, sct_img.bgra, "raw", "BGRX")
+        img.save(self.file_saver.get_free_path(), format=values.CAPTURE_PNG, quality=95)
+
+
+P_ENCODERS = {
+    "png": PngEncoder,
+    "jpeg": JpegEncoder,
+}
 
 
 class RecorderProcess(multiprocessing.Process):
-    def __init__(self, img_queue, rec_recv, interval, display, verbose=False):
+    def __init__(self,
+                 img_queue,
+                 rec_conn,
+                 shot_conn,
+                 interval,
+                 display,
+                 verbose=False):
         multiprocessing.Process.__init__(self)
         # Communication
         self.img_queue = img_queue
-        self.task = rec_recv
+        self.conn = rec_conn
+        self.shot_conn = shot_conn
 
         # Capture info
         self.interval = interval
@@ -130,14 +195,20 @@ class RecorderProcess(multiprocessing.Process):
     def run(self):
         if self.verbose:
             print("[Capture/Record] Recording process running...")
+        # recorder = dxcam.create(output_color="BGR")
+        # recorder.start(target_fps=60, video_mode=True)
         with mss.mss() as sct:
             mon = sct.monitors[self.display]
-            self.task.send(mon)
+            self.conn.send(mon)
             previous_shot = time.perf_counter_ns()
             while "Recording":
-                if self.task.poll() and self.task.recv() == values.TASK_KILL:
-                    self.img_queue.put(None)
-                    break
+                if self.conn.poll():
+                    task = self.conn.recv()
+                    if task == values.TASK_KILL:
+                        self.img_queue.put(None)
+                        break
+                    if task == values.TASK_SHOT:
+                        self.shot_conn.send(sct.grab(mon))
 
                 # Wait to align the frames
                 while time.perf_counter_ns() < previous_shot + self.interval:
@@ -152,7 +223,15 @@ class RecorderProcess(multiprocessing.Process):
 
 
 class ConvertProcess(multiprocessing.Process):
-    def __init__(self, img_queue, buffered_frames, trim_send, length, fps, format_, quality, verbose=False):
+    def __init__(self,
+                 img_queue,
+                 buffered_frames,
+                 trim_send,
+                 length,
+                 fps,
+                 format_,
+                 quality,
+                 verbose=False):
         multiprocessing.Process.__init__(self)
         # Communication
         self.img_queue = img_queue
@@ -191,7 +270,12 @@ class ConvertProcess(multiprocessing.Process):
 
 
 class TrimProcess(multiprocessing.Process):
-    def __init__(self, buffered_frames, trim_recv, length, fps, verbose=False):
+    def __init__(self,
+                 buffered_frames,
+                 trim_recv,
+                 length,
+                 fps,
+                 verbose=False):
         multiprocessing.Process.__init__(self)
         # Communication
         self.buffered_frames = buffered_frames
@@ -224,10 +308,19 @@ class TrimProcess(multiprocessing.Process):
 
 
 class Capture:
-    def __init__(self, video_encoder: VideoEncoder, display=1, quality=80, fps=20, length=10,
-                 with_sound: bool = False, verbose: bool = False):
+    def __init__(self,
+                 video_encoder: VideoEncoder,
+                 photo_encoder: PhotoEncoder,
+                 display=1,
+                 resolution=(1920, 1080),
+                 quality=80,
+                 fps=20,
+                 length=10,
+                 with_sound: bool = False,
+                 verbose: bool = False):
         # Recording options
         self.display = display
+        self.resolution = resolution
         self.quality = quality  # quality of the saved frames (increase for more ram usage)
         self.format_ = values.CAPTURE_JPEG  # todo add new extensions
         self.fps = fps
@@ -235,6 +328,7 @@ class Capture:
         self.length = length
         self.with_sound = with_sound  # todo add sound recording or ditch it
         self.video_encoder = video_encoder
+        self.photo_encoder = photo_encoder
 
         # Logging
         self.verbose = verbose
@@ -244,48 +338,69 @@ class Capture:
         self.buffered_frames = self.manager.list()
 
         # Multiprocessing communication
+        self.is_recording = False
         self.img_queue = Queue()
         self.rec_conn2, self.rec_conn1 = Pipe(duplex=True)
+        self.shot_conn2, self.shot_conn1 = Pipe(duplex=True)
         self.trim_recv, self.trim_send = Pipe(duplex=False)
         self.snap_recv, self.snap_send = Pipe(duplex=False)
         self.mon = None  # Dimensions of monitor being captured
 
         # Processes
-        self.rec_process = RecorderProcess(self.img_queue, self.rec_conn2, copy(self.interval), copy(self.display))
-        self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames, self.trim_send,
-                                           copy(self.length), copy(self.fps), copy(self.format_), copy(self.quality))
-        self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps))
+        self.rec_process = None
+        self.conv_process = None
+        self.trim_process = None
+        self._make_processes()
 
         if self.verbose:
             print("[Capture] Initialized Capture object")
 
     @classmethod
-    def from_config(cls, config, video_encoder: VideoEncoder):
-        # todo - update config to have all necessary options
+    def from_config(cls, config, video_encoder: VideoEncoder, photo_encoder: PhotoEncoder, verbose=False):
+        match = re.match(r"(?P<width>\d*)x(?P<height>\d*)", config['resolution'])
+        try:
+            resolution = (int(match['width']), int(match['height'])) if match else values.DEFAULT_RESOLUTION
+        except ValueError:
+            resolution = values.DEFAULT_RESOLUTION
         return cls(
-            video_encoder,
-            config['display'],
-            config['quality'],
-            config['fps'],
-            config['duration'],
-            config['save_sound']
+            video_encoder=video_encoder,
+            photo_encoder=photo_encoder,
+            display=config['display'],
+            resolution=resolution,
+            quality=config['quality'],
+            fps=config['fps'],
+            length=config['duration'],
+            with_sound=config['save_sound'],
+            verbose=verbose
         )
+
+    def _make_processes(self):
+        self.rec_process = RecorderProcess(self.img_queue, self.rec_conn2, self.shot_conn2, copy(self.interval),
+                                           copy(self.display), verbose=self.verbose)
+        self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames, self.trim_send, copy(self.length),
+                                           copy(self.fps), copy(self.format_), copy(self.quality), verbose=self.verbose)
+        self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps),
+                                        verbose=self.verbose)
 
     def start_recording(self):
         if self.verbose:
             self.rec_process.verbose = True
             self.conv_process.verbose = True
             self.trim_process.verbose = True
+
+        self.is_recording = True
+
         # Run all the processes
         self.rec_process.start()
         self.conv_process.start()
         self.trim_process.start()
+        return True
 
     def stop_recording(self):
         if not self.rec_process.is_alive():
             if self.verbose:
-                print("[Capture] Process is unalived")
-            return
+                print("[Capture] Processes haven't started")
+            return False
 
         if self.verbose:
             print("[Capture] Killing processes...")
@@ -295,17 +410,23 @@ class Capture:
         self.conv_process.join()
         self.trim_process.join()
 
+        if self.verbose:
+            print("[Capture] Processes joined")
+
+        self.is_recording = False
+
         # Set-up for next recording
         self.img_queue = Queue()
 
         self.buffered_frames = self.manager.list()
 
-        self.rec_process = RecorderProcess(self.img_queue, self.rec_conn2, copy(self.interval), copy(self.display))
-        self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames, self.trim_send,
-                                           copy(self.length), copy(self.fps), copy(self.format_), copy(self.quality))
-        self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps))
+        self._make_processes()
 
-    def get_recording(self):
+        return True
+
+    def export_recording(self):
+        if not self.is_recording:
+            return False
         if self.rec_conn1.poll():
             self.mon = self.rec_conn1.recv()
 
@@ -317,13 +438,16 @@ class Capture:
             print(f"[Capture] Exporting {len(frames)} frames")
 
         self.video_encoder.encode(frames, screen_size)
+        return True
 
-    def get_screenshot(self):
-        return self.buffered_frames[-1]
+    def export_screenshot(self):
+        self.rec_conn1.send(values.TASK_SHOT)
+        while not self.shot_conn1.poll():
+            pass
+        if self.rec_conn1.poll():
+            self.mon = self.rec_conn1.recv()
+        screen_size = (self.mon['width'], self.mon['height']) if self.mon is not None else values.DEFAULT_SCREEN_SIZE
+        self.photo_encoder.encode(self.shot_conn1.recv(), screen_size, self.resolution)
 
     def get_video_encoder(self):
         return self.video_encoder
-
-    def get_config(self):
-        settings = {}  # todo create config/settings file from current state
-        return settings
