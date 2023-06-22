@@ -262,11 +262,11 @@ class ConvertProcess(multiprocessing.Process):
         cnt = 0
         if self.verbose:
             print(f"[Capture/Convert] Convert("
-                  f"length:{self.length}"
-                  f"fps:{self.fps}"
-                  f"format_:{self.format_}"
-                  f"quality:{self.quality}"
-                  f"resolution:{self.resolution}")
+                  f"length={self.length}, "
+                  f"fps={self.fps}, "
+                  f"format_={self.format_}, "
+                  f"quality={self.quality}, "
+                  f"resolution={self.resolution}, ")
             print("[Capture/Convert] Converting process running...")
         while "There are screenshots":
             if cnt >= self.length * self.fps * 1.1:
@@ -456,8 +456,8 @@ class Capture:
 
         screen_size = (self.mon['width'], self.mon['height']) if self.mon is not None else values.DEFAULT_SCREEN_SIZE
 
-        # screen_size = self.resolution if self.resolution < screen_size else screen_size
         frames = list(self.buffered_frames[-self.length * self.fps:])
+        del self.buffered_frames[:]  # Clear the buffer
 
         if self.verbose:
             print(f"[Capture] Exporting {len(frames)} frames")

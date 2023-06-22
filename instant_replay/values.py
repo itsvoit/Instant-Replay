@@ -3,10 +3,11 @@ import os
 APP_NAME = "Instant Replay"
 ROOT_DIR, _ = os.path.split(os.path.dirname(os.path.abspath(__file__)))
 
-CONFIG_FILE_NAME = "config.json"
+CONFIG_FILE_NAME = os.path.join(ROOT_DIR, "config.json")
 CAPTURE_JPEG = "JPEG"
 CAPTURE_PNG = "PNG"
 
+MAX_LEN = 45
 
 DEFAULT_START_CAP = False
 DEFAULT_RESOLUTION = '1920x1080'
@@ -44,7 +45,7 @@ DEFAULT_CONFIG = {
 
 
 ALL_CONFIG_VALUES = {
-                'resolution': ['3840x2160', '2560x1440', '1920x1080', '1280x720'],
+                'resolution': ['1920x1080'],
                 'fps': [10, 15, 20, 25, 30],
                 'codec': ['mp4'],
                 'p_ext': ["png", "jpeg"]

@@ -51,6 +51,10 @@ class UiMainWindow(QMainWindow):
         self.stop_button = self.make_menu_button("stop_button", values.STOP_REC_ICON)
         spacerItem2 = QtWidgets.QSpacerItem(20, 220, QtWidgets.QSizePolicy.Maximum, QtWidgets.QSizePolicy.Expanding)
 
+        self.option_button.setDisabled(True)
+        # self.video_button.hide()
+        # self.editor_button.hide()
+
         self.menu_vertical_layout.addWidget(self.option_button)
         self.menu_vertical_layout.addWidget(self.video_button)
         self.menu_vertical_layout.addWidget(self.editor_button)
@@ -140,7 +144,7 @@ class UiMainWindow(QMainWindow):
 
         self.save_button = self.make_button("save_button", (590, 570))
 
-        self.duration_horizontal_slider = self.make_horizontal_slider("duration_slider", (270, 380), 10, 120)
+        self.duration_horizontal_slider = self.make_horizontal_slider("duration_slider", (270, 380), 10, values.MAX_LEN)
 
         self.v_dur_display = self.make_lcd_display("v_dur_display", (470, 380), 91, 32)
 
@@ -349,7 +353,7 @@ class UiMainWindow(QMainWindow):
     def retranslateUi(self):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate(values.APP_NAME, values.APP_NAME))
-        self.option_button.setText(_translate(values.APP_NAME, "  Option"))
+        self.option_button.setText(_translate(values.APP_NAME, "  Options"))
         self.video_button.setText(_translate(values.APP_NAME, "  Replay"))
         self.editor_button.setText(_translate(values.APP_NAME, "  Video editor"))
         self.start_button.setText(_translate(values.APP_NAME, "  Start"))
@@ -359,8 +363,8 @@ class UiMainWindow(QMainWindow):
         self.exit_button.setText(_translate(values.APP_NAME, "  Exit"))
         self.resolution_label.setText(_translate(values.APP_NAME, "Resolution"))
         self.FPS_label.setText(_translate(values.APP_NAME, "FPS"))
-        self.extension_label.setText(_translate(values.APP_NAME, "Replay extension"))
-        self.photo_extension_label.setText(_translate(values.APP_NAME, "Screenshot extension"))
+        self.extension_label.setText(_translate(values.APP_NAME, "Replay ext"))
+        self.photo_extension_label.setText(_translate(values.APP_NAME, "Screenshot ext"))
         self.v_hotkey.setText(_translate(values.APP_NAME, "Replay Hotkey"))
         self.s_hotkey.setText(_translate(values.APP_NAME, "Screenshot Hotkey"))
         self.quality_label.setText(_translate(values.APP_NAME, "Bitrate/Quality"))

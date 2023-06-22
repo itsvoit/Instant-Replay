@@ -52,7 +52,6 @@ class Controller(QObject):
         self.view.exit_button.clicked.connect(self.close_app)
         self.view.reset_button.clicked.connect(self.show_default_config)
         self.view.save_button.clicked.connect(self.update_config_from_gui)
-        # self.view.video_hotkey.
 
         self.model: Capture = None
         self.hotkeys: GlobalHotKeys = None
@@ -227,7 +226,7 @@ class Controller(QObject):
         default = self.config['resolution'].split('x')
 
         return self.config['fps'] * int(self.config['duration']) * \
-            int(self.config['quality']) / 100 * int(default[0]) * int(default[1]) / 2073600 * 1.35
+            int(self.config['quality']) / 100 * int(default[0]) * int(default[1]) / 2073600 * 0.8
 
     def _stop_services(self):
         self.stop_capture()
