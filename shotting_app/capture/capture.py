@@ -30,6 +30,7 @@ class Frame:
         img = Image.frombytes("RGB", self.size, sct_img.bgra, "raw", "BGRX") if hasattr(sct_img, "bgra")  \
             else Image.frombytes("RGB", self.size, sct_img, "raw", "BGRX")
 
+        img = img.resize((1280, 720)), #todo przekazac wybrana przez uzytkownika roz mniejsza niz ralna monitora
         img.save(self.buffered_img, format=format_, quality=quality)
 
     def to_file(self, path_):
@@ -106,7 +107,7 @@ class Mp4VideoEncoder(VideoEncoder):
         output_path = self.file_saver.get_free_path()
 
         fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # todo restrict based on the extension of the FileSaver
-        out = cv2.VideoWriter(output_path, fourcc, self.fps, screen_size)
+        out = cv2.VideoWriter(output_path, fourcc, self.fps, screen_size) #todo przekazac wybrana przez uzytkownika roz mniejsza niz ralna monitora
 
         for frame in frames:
             out.write(cv2.cvtColor(np.array(frame.get()), cv2.COLOR_RGB2BGR))
