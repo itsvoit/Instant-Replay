@@ -13,6 +13,7 @@ import dxcam
 import mss
 import numpy as np
 from PIL import Image
+from pympler.asizeof import asizeof
 
 import shotting_app.values as values
 
@@ -159,8 +160,8 @@ class JpegEncoder(PhotoEncoder):
             try:
                 width, height = scale
                 sct_img = cv2.resize(sct_img, (width, height))
-            except Exception:
-                pass
+            except Exception as e:
+                print(e)
         img = Image.frombytes("RGB", screen_size, sct_img.bgra, "raw", "BGRX")
         img.save(self.file_saver.get_free_path(), format=values.CAPTURE_PNG, quality=95)
 
@@ -216,6 +217,7 @@ class RecorderProcess(multiprocessing.Process):
 
                 previous_shot = time.perf_counter_ns()
                 sct_img = sct.grab(mon)
+
                 self.img_queue.put(sct_img)
 
         if self.verbose:
@@ -261,7 +263,7 @@ class ConvertProcess(multiprocessing.Process):
             if sct_img is None:
                 self.trim_signal.send(values.TASK_KILL)
                 break
-
+            print(asizeof(sct_img))
             frame = Frame(sct_img, self.format_, self.quality)
             self.frames.append(frame)
             cnt += 1

@@ -218,7 +218,6 @@ class Controller(QObject):
         self.view.v_storage_line.setText(config['video_path'])
         self.view.s_storage_line.setText(config['screen_path'])
 
-        print(self._get_ram_usage())
         self.view.ram_display.display(self._get_ram_usage())
 
     def _get_ram_usage(self):
@@ -229,7 +228,7 @@ class Controller(QObject):
         default = self.config['resolution'].split('x')
 
         return self.config['fps'] * int(self.config['duration']) * \
-            int(self.config['quality']) / 100 * int(default[0]) * int(default[1]) / 2073600
+            int(self.config['quality']) / 100 * int(default[0]) * int(default[1]) / 2073600 * 1.35
 
     def _stop_services(self):
         self.stop_capture()
