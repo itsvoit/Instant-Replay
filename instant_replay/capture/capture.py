@@ -262,11 +262,11 @@ class ConvertProcess(multiprocessing.Process):
         cnt = 0
         if self.verbose:
             print(f"[Capture/Convert] Convert("
-                  f"length:{self.length}"
-                  f"fps:{self.fps}"
-                  f"format_:{self.format_}"
-                  f"quality:{self.quality}"
-                  f"resolution:{self.resolution}")
+                  f"length={self.length}, "
+                  f"fps={self.fps}, "
+                  f"format_={self.format_}, "
+                  f"quality={self.quality}, "
+                  f"resolution={self.resolution}, ")
             print("[Capture/Convert] Converting process running...")
         while "There are screenshots":
             if cnt >= self.length * self.fps * 1.1:

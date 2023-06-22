@@ -45,7 +45,7 @@ DEFAULT_CONFIG = {
 
 
 ALL_CONFIG_VALUES = {
-                'resolution': ['3840x2160', '2560x1440', '1920x1080', '1280x720'],
+                'resolution': ['1920x1080'],
                 'fps': [10, 15, 20, 25, 30],
                 'codec': ['mp4'],
                 'p_ext': ["png", "jpeg"]
