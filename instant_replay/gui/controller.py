@@ -1,18 +1,14 @@
 import json
-import os
-import sys
 from copy import copy
 
 import mss
-import qdarkstyle
 from PyQt5 import QtCore
 from PyQt5.QtCore import pyqtSlot, QObject
-from PyQt5.QtWidgets import QApplication
 from infi.systray import SysTrayIcon
 from pynput.keyboard import GlobalHotKeys
 
-from shotting_app import values
-from shotting_app.capture.capture import Capture, VID_ENCODERS, P_ENCODERS, FileSaver
+from instant_replay import values
+from instant_replay.capture.capture import Capture, VID_ENCODERS, P_ENCODERS, FileSaver
 
 
 def save_config(config, file_name):
@@ -157,13 +153,16 @@ class Controller(QObject):
 
     def _load_config(self, file_name):
         try:
+            all_config = values.ALL_CONFIG_VALUES
             with open(file_name, "r") as config:
                 out_conf = json.load(config)
                 for key in values.DEFAULT_CONFIG.keys():
                     if key not in out_conf or out_conf[key] is None:
                         out_conf[key] = values.DEFAULT_CONFIG[key]
-                    if out_conf['display'] > self.n_of_displays:
-                        out_conf['display'] = 1
+                    if key in all_config and out_conf[key] not in all_config[key]:
+                        out_conf[key] = values.DEFAULT_CONFIG[key]
+                if out_conf['display'] > self.n_of_displays or out_conf['display'] <= 0:
+                    out_conf['display'] = 1
 
         except IOError:  # if not found, create a new one
             out_conf = copy(values.DEFAULT_CONFIG)
@@ -218,7 +217,6 @@ class Controller(QObject):
         self.view.v_storage_line.setText(config['video_path'])
         self.view.s_storage_line.setText(config['screen_path'])
 
-        print(self._get_ram_usage())
         self.view.ram_display.display(self._get_ram_usage())
 
     def _get_ram_usage(self):
@@ -229,7 +227,7 @@ class Controller(QObject):
         default = self.config['resolution'].split('x')
 
         return self.config['fps'] * int(self.config['duration']) * \
-            int(self.config['quality']) / 100 * int(default[0]) * int(default[1]) / 2073600
+            int(self.config['quality']) / 100 * int(default[0]) * int(default[1]) / 2073600 * 1.35
 
     def _stop_services(self):
         self.stop_capture()
