@@ -140,7 +140,7 @@ class UiMainWindow(QMainWindow):
 
         self.save_button = self.make_button("save_button", (590, 570))
 
-        self.duration_horizontal_slider = self.make_horizontal_slider("duration_slider", (270, 380), 10, 120)
+        self.duration_horizontal_slider = self.make_horizontal_slider("duration_slider", (270, 380), 10, values.MAX_LEN)
 
         self.v_dur_display = self.make_lcd_display("v_dur_display", (470, 380), 91, 32)
 

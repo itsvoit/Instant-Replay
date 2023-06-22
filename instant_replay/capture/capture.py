@@ -456,8 +456,8 @@ class Capture:
 
         screen_size = (self.mon['width'], self.mon['height']) if self.mon is not None else values.DEFAULT_SCREEN_SIZE
 
-        # screen_size = self.resolution if self.resolution < screen_size else screen_size
         frames = list(self.buffered_frames[-self.length * self.fps:])
+        del self.buffered_frames[:]  # Clear the buffer
 
         if self.verbose:
             print(f"[Capture] Exporting {len(frames)} frames")
