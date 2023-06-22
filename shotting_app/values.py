@@ -7,13 +7,15 @@ CONFIG_FILE_NAME = "config.json"
 CAPTURE_JPEG = "JPEG"
 CAPTURE_PNG = "PNG"
 
+CAPTURE_MODE = "RGB"
+
 
 DEFAULT_START_CAP = False
 DEFAULT_RESOLUTION = '1920x1080'
 DEFAULT_FPS = 15
 DEFAULT_CODEC = "mp4"
 DEFAULT_P_EXT = "png"
-DEFAULT_DISPLAY = 1  # Main display
+DEFAULT_DISPLAY = 0  # Main display
 DEFAULT_V_HOTKEY = "<ctrl>+<shift>+p"
 DEFAULT_P_HOTKEY = "<ctrl>+<shift>+o"
 DEFAULT_W_SOUND = False  # Not implemented
@@ -27,6 +29,7 @@ DEFAULT_RUN_TRAY = True
 DEFAULT_CONFIG = {
                   'start_capture': DEFAULT_START_CAP,
                   'resolution': DEFAULT_RESOLUTION,
+                  'scale': DEFAULT_RESOLUTION,
                   'fps': DEFAULT_FPS,
                   'codec': DEFAULT_CODEC,
                   'p_ext': DEFAULT_P_EXT,
@@ -45,7 +48,7 @@ DEFAULT_CONFIG = {
 
 ALL_CONFIG_VALUES = {
                 'resolution': ['3840x2160', '2560x1440', '1920x1080', '1280x720'],
-                'fps': [10, 15, 20, 25, 30],
+                'fps': [10, 15, 20, 25, 30, 50, 60],
                 'codec': ['mp4'],
                 'p_ext': ["png", "jpeg"]
 }

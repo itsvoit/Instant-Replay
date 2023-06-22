@@ -3,6 +3,7 @@ import os
 import sys
 from copy import copy
 
+import dxcam
 import mss
 import qdarkstyle
 from PyQt5 import QtCore
@@ -12,6 +13,7 @@ from infi.systray import SysTrayIcon
 from pynput.keyboard import GlobalHotKeys
 
 from shotting_app import values
+from shotting_app.capture import capture
 from shotting_app.capture.capture import Capture, VID_ENCODERS, P_ENCODERS, FileSaver
 
 
@@ -29,9 +31,8 @@ def get_config_options():
 
 
 def n_of_displays():
-    with mss.mss() as sct:
-        displays = len(sct.monitors)
-    return displays - 1
+    info = dxcam.output_info().strip().split('\n')
+    return len(info)
 
 
 class Controller(QObject):
@@ -47,8 +48,6 @@ class Controller(QObject):
         self._set_config_options()
         self._show_config()
 
-
-        # self.view.option_button.clicked.connect(self.select_option_widget)
         self.view.start_button.clicked.connect(self.start_capture)
         self.view.capture_button.clicked.connect(self.export_replay)
         self.view.screenshot_button.clicked.connect(self.export_screenshot)
@@ -56,7 +55,6 @@ class Controller(QObject):
         self.view.exit_button.clicked.connect(self.close_app)
         self.view.reset_button.clicked.connect(self.show_default_config)
         self.view.save_button.clicked.connect(self.update_config_from_gui)
-        # self.view.video_hotkey.
 
         self.model: Capture = None
         self.hotkeys: GlobalHotKeys = None
@@ -162,8 +160,8 @@ class Controller(QObject):
                 for key in values.DEFAULT_CONFIG.keys():
                     if key not in out_conf or out_conf[key] is None:
                         out_conf[key] = values.DEFAULT_CONFIG[key]
-                    if out_conf['display'] > self.n_of_displays:
-                        out_conf['display'] = 1
+                if out_conf['display'] > self.n_of_displays-1:
+                    out_conf['display'] = 0
 
         except IOError:  # if not found, create a new one
             out_conf = copy(values.DEFAULT_CONFIG)
@@ -180,7 +178,13 @@ class Controller(QObject):
         self.view.FPS_combo_box.addItems([str(x) for x in options['fps']])
         self.view.extension_combo_box.addItems([str(x) for x in options['codec']])
         self.view.photo_extension_combo_box.addItems([str(x) for x in options['p_ext']])
-        self.view.display_combo_box.addItems([f"Display {str(x)}" for x in range(1, self.n_of_displays+1)])
+        displays = []
+        for display in capture.get_displays_info():
+            n = display['output']
+            width, height = display['resolution']
+            primary = " (P)" if display['primary'] else ""
+            displays.append(f"Disp {n} ({width}x{height}){primary}")
+        self.view.display_combo_box.addItems(displays)
 
     def _setup_services(self):
         self.model = self._make_model()
@@ -203,12 +207,13 @@ class Controller(QObject):
         codec_index = all_conf['codec'].index(config['codec'])
         p_ext_index = all_conf['p_ext'].index(config['p_ext'])
         display_index = config['display']
+        print("Display index:", display_index)
 
         self.view.resolution_combo_box.setCurrentIndex(resolution_index)
         self.view.FPS_combo_box.setCurrentIndex(fps_index)
         self.view.extension_combo_box.setCurrentIndex(codec_index)
         self.view.photo_extension_combo_box.setCurrentIndex(p_ext_index)
-        self.view.display_combo_box.setCurrentIndex(display_index - 1)
+        self.view.display_combo_box.setCurrentIndex(display_index)
 
         # Set values in view
         self.view.video_hotkey.setText(config['video_hotkey'])
@@ -218,7 +223,6 @@ class Controller(QObject):
         self.view.v_storage_line.setText(config['video_path'])
         self.view.s_storage_line.setText(config['screen_path'])
 
-        print(self._get_ram_usage())
         self.view.ram_display.display(self._get_ram_usage())
 
     def _get_ram_usage(self):
@@ -250,7 +254,7 @@ class Controller(QObject):
         self.config['fps'] = int(self.view.FPS_combo_box.currentText())
         self.config['codec'] = self.view.extension_combo_box.currentText()
         self.config['p_ext'] = self.view.photo_extension_combo_box.currentText()
-        self.config['display'] = self.view.display_combo_box.currentIndex() + 1
+        self.config['display'] = self.view.display_combo_box.currentIndex()
 
         # Get normal values
         self.config['video_hotkey'] = self.view.video_hotkey.text()

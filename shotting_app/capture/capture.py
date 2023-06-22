@@ -2,11 +2,13 @@ import errno
 import multiprocessing
 import os
 import re
+import threading
 import time
 from abc import abstractmethod
 from copy import copy
 from io import BytesIO
 from multiprocessing import Queue, Pipe, Manager
+from pprint import pprint
 
 import cv2
 import dxcam
@@ -26,8 +28,7 @@ class Frame:
         self.size = sct_img.size
         self.format_ = format_
 
-        img = Image.frombytes("RGB", self.size, sct_img.bgra, "raw", "BGRX") if hasattr(sct_img, "bgra")  \
-            else Image.frombytes("RGB", self.size, sct_img, "raw", "BGRX")
+        img = Image.fromarray(sct_img, mode=values.CAPTURE_MODE)
 
         img.save(self.buffered_img, format=format_, quality=quality)
 
@@ -104,11 +105,11 @@ class Mp4VideoEncoder(VideoEncoder):
     def encode(self, frames: list[Frame], screen_size):
         output_path = self.file_saver.get_free_path()
 
-        fourcc = cv2.VideoWriter_fourcc(*"mp4v")  # todo restrict based on the extension of the FileSaver
+        fourcc = cv2.VideoWriter_fourcc(*"mp4v")
         out = cv2.VideoWriter(output_path, fourcc, self.fps, screen_size)
 
         for frame in frames:
-            out.write(cv2.cvtColor(np.array(frame.get()), cv2.COLOR_RGB2BGR))
+            out.write(cv2.cvtColor(np.asarray(frame.get()), cv2.COLOR_RGB2BGR))
         out.release()
 
 
@@ -144,7 +145,7 @@ class PngEncoder(PhotoEncoder):
         PhotoEncoder.__init__(self, file_saver)
 
     def encode(self, sct_img, screen_size, scale=None):
-        img = Image.frombytes("RGB", screen_size, sct_img.bgra, "raw", "BGRX")
+        img = Image.fromarray(sct_img, mode=values.CAPTURE_MODE)
         img.save(self.file_saver.get_free_path(), format=values.CAPTURE_PNG, quality=95)
 
 
@@ -155,14 +156,10 @@ class JpegEncoder(PhotoEncoder):
         ...
 
     def encode(self, sct_img, screen_size, scale=None):
-        if scale:
-            try:
-                width, height = scale
-                sct_img = cv2.resize(sct_img, (width, height))
-            except Exception:
-                pass
-        img = Image.frombytes("RGB", screen_size, sct_img.bgra, "raw", "BGRX")
-        img.save(self.file_saver.get_free_path(), format=values.CAPTURE_PNG, quality=95)
+        if scale != screen_size:
+            sct_img = cv2.resize(sct_img, scale)
+        img = Image.fromarray(sct_img, mode=values.CAPTURE_MODE)
+        img.save(self.file_saver.get_free_path(), format=values.CAPTURE_JPEG, quality=95)
 
 
 P_ENCODERS = {
@@ -179,10 +176,10 @@ class RecorderProcess(multiprocessing.Process):
                  interval,
                  display,
                  verbose=False):
-        multiprocessing.Process.__init__(self)
+        super(RecorderProcess, self).__init__()
         # Communication
         self.img_queue = img_queue
-        self.conn = rec_conn
+        self.task = rec_conn
         self.shot_conn = shot_conn
 
         # Capture info
@@ -197,45 +194,51 @@ class RecorderProcess(multiprocessing.Process):
             print("[Capture/Record] Recording process running...")
         # recorder = dxcam.create(output_color="BGR")
         # recorder.start(target_fps=60, video_mode=True)
-        with mss.mss() as sct:
-            mon = sct.monitors[self.display]
-            self.conn.send(mon)
+        sct = dxcam.create(output_idx=self.display, output_color=values.CAPTURE_MODE)
+
+        previous_shot = time.perf_counter_ns()
+        previous_frame = None
+        while "Recording":
+            # Check for tasks
+            if self.task.poll():
+                task = self.task.recv()
+                if task == values.TASK_KILL:  # Kill the thread - break the loop
+                    break
+                if task == values.TASK_SHOT:  # Export a screenshot
+                    shot = sct.grab()
+                    self.shot_conn.send(shot if shot is not None else previous_frame)
+
+            # Wait to align the frames
+            while time.perf_counter_ns() < previous_shot + self.interval:
+                pass
+
             previous_shot = time.perf_counter_ns()
-            while "Recording":
-                if self.conn.poll():
-                    task = self.conn.recv()
-                    if task == values.TASK_KILL:
-                        self.img_queue.put(None)
-                        break
-                    if task == values.TASK_SHOT:
-                        self.shot_conn.send(sct.grab(mon))
+            sct_img = sct.grab()  # if idling (nothing new to render) then grab returns None
+            sct_img = sct_img if sct_img is not None else previous_frame
+            previous_frame = sct_img
 
-                # Wait to align the frames
-                while time.perf_counter_ns() < previous_shot + self.interval:
-                    pass
-
-                previous_shot = time.perf_counter_ns()
-                sct_img = sct.grab(mon)
-                self.img_queue.put(sct_img)
+            self.img_queue.put(sct_img)  # Send to the next thread
 
         if self.verbose:
             print("[Capture/Record] Recording process finishing...")
 
 
-class ConvertProcess(multiprocessing.Process):
+class ConvertThread(multiprocessing.Process):
     def __init__(self,
                  img_queue,
                  buffered_frames,
+                 task,
                  trim_send,
                  length,
                  fps,
                  format_,
                  quality,
                  verbose=False):
-        multiprocessing.Process.__init__(self)
+        super(ConvertThread, self).__init__()
         # Communication
         self.img_queue = img_queue
         self.frames = buffered_frames
+        self.task = task
         self.trim_signal = trim_send
 
         # Frame format / quality
@@ -252,14 +255,14 @@ class ConvertProcess(multiprocessing.Process):
         if self.verbose:
             print("[Capture/Convert] Converting process running...")
         while "There are screenshots":
+            if self.task.poll() and self.task.recv() == values.TASK_KILL:
+                break
             if cnt == self.length * self.fps * 2:
                 cnt = self.length * self.fps
                 self.trim_signal.send(values.TASK_TRIM)
 
             sct_img = self.img_queue.get()
-            # print("Got an image")
             if sct_img is None:
-                self.trim_signal.send(values.TASK_KILL)
                 break
 
             frame = Frame(sct_img, self.format_, self.quality)
@@ -269,17 +272,17 @@ class ConvertProcess(multiprocessing.Process):
             print("[Capture/Convert] Converting process finishing...")
 
 
-class TrimProcess(multiprocessing.Process):
+class TrimThread(multiprocessing.Process):
     def __init__(self,
                  buffered_frames,
-                 trim_recv,
+                 task,
                  length,
                  fps,
                  verbose=False):
-        multiprocessing.Process.__init__(self)
+        super(TrimThread, self).__init__()
         # Communication
         self.buffered_frames = buffered_frames
-        self.trim_recv = trim_recv
+        self.task = task
 
         # Trimming info
         self.length = length
@@ -292,8 +295,8 @@ class TrimProcess(multiprocessing.Process):
         if self.verbose:
             print("[Capture/Trim] Trimming process running...")
         while "Working":
-            if self.trim_recv.poll():
-                task = self.trim_recv.recv()
+            if self.task.poll():
+                task = self.task.recv()
                 if task == values.TASK_KILL:
                     break
                 elif task == values.TASK_TRIM:
@@ -307,26 +310,49 @@ class TrimProcess(multiprocessing.Process):
             print("[Capture/Trim] Trimming process finishing...")
 
 
+def get_displays_info():
+    displays_info = dxcam.output_info().strip().split('\n')
+    displays = []
+    for display in displays_info:
+        match = re.match(
+            r"Device\[(?P<device>\d)] Output\[(?P<output>\d)]: " +
+            r"Res:(?P<resolution>\(\d*, \d*\)) Rot:(?P<rotation>\d*) Primary:(?P<primary>.*)", display)
+        res_match = re.match(r"\((?P<width>\d*), (?P<height>\d*)\)", match['resolution'])
+        resolution = (int(res_match['width']), int(res_match['height'])) if res_match else values.DEFAULT_RESOLUTION
+        displays.append({
+            "device": int(match['device']),
+            "output": int(match['output']),
+            "resolution": resolution,
+            "rotation": int(match['rotation']),
+            "primary": match['primary'] == "True",
+        } if match else None)
+
+    return displays
+
+
 class Capture:
     def __init__(self,
                  video_encoder: VideoEncoder,
                  photo_encoder: PhotoEncoder,
-                 display=1,
+                 display=0,
                  resolution=(1920, 1080),
+                 scale=(1920, 1080),
                  quality=80,
-                 fps=20,
-                 length=10,
+                 fps=15,
+                 length=20,
                  with_sound: bool = False,
                  verbose: bool = False):
         # Recording options
         self.display = display
+        self.displays = get_displays_info()
         self.resolution = resolution
+        self.scale = scale if scale <= resolution else resolution
         self.quality = quality  # quality of the saved frames (increase for more ram usage)
-        self.format_ = values.CAPTURE_JPEG  # todo add new extensions
+        self.format_ = values.CAPTURE_JPEG
         self.fps = fps
         self.interval = (1 / self.fps) * pow(10, 9)  # interval between frames in nanoseconds
         self.length = length
-        self.with_sound = with_sound  # todo add sound recording or ditch it
+        self.with_sound = with_sound
         self.video_encoder = video_encoder
         self.photo_encoder = photo_encoder
 
@@ -340,11 +366,10 @@ class Capture:
         # Multiprocessing communication
         self.is_recording = False
         self.img_queue = Queue()
-        self.rec_conn2, self.rec_conn1 = Pipe(duplex=True)
-        self.shot_conn2, self.shot_conn1 = Pipe(duplex=True)
-        self.trim_recv, self.trim_send = Pipe(duplex=False)
-        self.snap_recv, self.snap_send = Pipe(duplex=False)
-        self.mon = None  # Dimensions of monitor being captured
+        self.rec_conn2, self.rec_conn1 = Pipe()
+        self.shot_conn2, self.shot_conn1 = Pipe()
+        self.conv_conn2, self.conv_conn1 = Pipe()
+        self.trim_conn2, self.trim_conn1 = Pipe()
 
         # Processes
         self.rec_process = None
@@ -362,10 +387,18 @@ class Capture:
             resolution = (int(match['width']), int(match['height'])) if match else values.DEFAULT_RESOLUTION
         except ValueError:
             resolution = values.DEFAULT_RESOLUTION
+
+        match = re.match(r"(?P<width>\d*)x(?P<height>\d*)", config['scale'])
+        try:
+            scale = (int(match['width']), int(match['height'])) if match else values.DEFAULT_RESOLUTION
+        except ValueError:
+            scale = values.DEFAULT_RESOLUTION
+
         return cls(
             video_encoder=video_encoder,
             photo_encoder=photo_encoder,
             display=config['display'],
+            scale=scale,
             resolution=resolution,
             quality=config['quality'],
             fps=config['fps'],
@@ -377,10 +410,10 @@ class Capture:
     def _make_processes(self):
         self.rec_process = RecorderProcess(self.img_queue, self.rec_conn2, self.shot_conn2, copy(self.interval),
                                            copy(self.display), verbose=self.verbose)
-        self.conv_process = ConvertProcess(self.img_queue, self.buffered_frames, self.trim_send, copy(self.length),
-                                           copy(self.fps), copy(self.format_), copy(self.quality), verbose=self.verbose)
-        self.trim_process = TrimProcess(self.buffered_frames, self.trim_recv, copy(self.length), copy(self.fps),
-                                        verbose=self.verbose)
+        self.conv_process = ConvertThread(self.img_queue, self.buffered_frames, self.conv_conn2, self.trim_conn1, copy(self.length),
+                                          copy(self.fps), copy(self.format_), copy(self.quality), verbose=self.verbose)
+        self.trim_process = TrimThread(self.buffered_frames, self.trim_conn2, copy(self.length), copy(self.fps),
+                                       verbose=self.verbose)
 
     def start_recording(self):
         if self.verbose:
@@ -405,6 +438,8 @@ class Capture:
         if self.verbose:
             print("[Capture] Killing processes...")
         self.rec_conn1.send(values.TASK_KILL)
+        self.conv_conn1.send(values.TASK_KILL)
+        self.trim_conn1.send(values.TASK_KILL)
 
         self.rec_process.join()
         self.conv_process.join()
@@ -427,27 +462,26 @@ class Capture:
     def export_recording(self):
         if not self.is_recording:
             return False
-        if self.rec_conn1.poll():
-            self.mon = self.rec_conn1.recv()
-
-        screen_size = (self.mon['width'], self.mon['height']) if self.mon is not None else values.DEFAULT_SCREEN_SIZE
+        display = self.displays[self.display]
+        width, height = display['resolution']
+        screen_size = (width, height) if display is not None else values.DEFAULT_SCREEN_SIZE
 
         frames = list(self.buffered_frames[-self.length * self.fps:])
 
         if self.verbose:
             print(f"[Capture] Exporting {len(frames)} frames")
 
-        self.video_encoder.encode(frames, screen_size)
+        thread = threading.Thread(target=self.video_encoder.encode, args=(frames, screen_size,))
+        thread.start()
+        thread.join()
         return True
 
     def export_screenshot(self):
         self.rec_conn1.send(values.TASK_SHOT)
         while not self.shot_conn1.poll():
             pass
-        if self.rec_conn1.poll():
-            self.mon = self.rec_conn1.recv()
-        screen_size = (self.mon['width'], self.mon['height']) if self.mon is not None else values.DEFAULT_SCREEN_SIZE
-        self.photo_encoder.encode(self.shot_conn1.recv(), screen_size, self.resolution)
+
+        self.photo_encoder.encode(self.shot_conn1.recv(), self.resolution, self.scale)
 
     def get_video_encoder(self):
         return self.video_encoder
