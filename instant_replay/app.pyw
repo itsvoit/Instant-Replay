@@ -3,16 +3,15 @@ import sys
 import qdarkstyle
 from PyQt5.QtWidgets import QApplication
 
-from shotting_app.gui.controller import Controller
-from shotting_app.gui.gui import UiMainWindow
+from gui.controller import Controller
+from gui.gui import UiMainWindow
 
 
 class ScreenRecorder(QApplication):
     def __init__(self, argv):
         super(ScreenRecorder, self).__init__(argv)
-        verbose = True if len(argv) > 0 and argv[0] else False
-        self.view = UiMainWindow(verbose)
-        self.controller = Controller(self.view, verbose)
+        self.view = UiMainWindow()
+        self.controller = Controller(self.view)
         self.tray = self.controller.create_tray()
         self.tray.start()
 
